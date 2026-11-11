@@ -1,0 +1,60 @@
+/* Semantic aliases + fonts. Use these in new code and in Tailwind (see tailwind.config.js). */
+:root {
+  --font-body: "DM Sans Variable", "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Manrope Variable", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-page: var(--bg-ffffff);
+  --color-band: var(--bg-f8f9fc);
+  --color-ink: var(--tx-172337);
+  --color-muted: var(--tx-718095);
+  --color-line: var(--bd-edf0f4);
+  --color-accent: var(--tx-826bbd);
+  --color-brand: var(--bg-172b43);
+}
+
+/* Short cross-fade when the theme flips live (e.g. at sunset). Added/removed by applyTheme(). */
+html.theme-fade,
+html.theme-fade *,
+html.theme-fade *::before,
+html.theme-fade *::after {
+  transition:
+    background-color 0.45s ease,
+    color 0.45s ease,
+    border-color 0.45s ease,
+    fill 0.45s ease,
+    stroke 0.45s ease !important;
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--color-brand);
+  color: var(--tx-ffffff);
+  font-weight: 600;
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+/*
+ * Panels that stay dark in both themes (see the end of tokens.generated.css) must also re-resolve the semantic
+ * aliases: custom properties that reference other variables are computed where they are declared (:root),
+ * so descendants would otherwise inherit the dark-theme values.
+ */
+:root[data-theme="dark"] :is(.section-dark, .store-cover, .footer) {
+  --color-page: var(--bg-ffffff);
+  --color-band: var(--bg-f8f9fc);
+  --color-ink: var(--tx-172337);
+  --color-muted: var(--tx-718095);
+  --color-line: var(--bd-edf0f4);
+  --color-accent: var(--tx-826bbd);
+  --color-brand: var(--bg-172b43);
+}
+/* Dark footer on a dark page: give it a hairline so the edge is visible. */
+:root[data-theme="dark"] .footer {
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}

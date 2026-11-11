@@ -1,0 +1,7 @@
+# Supabase project settings used by the CLI (`supabase functions deploy`, `supabase start`).
+project_id = "sellsharp"
+
+# Browser-called functions keep the default (verify_jwt = true) AND re-check the user inside the function.
+# Paystack cannot send a Supabase JWT; this function authenticates the request with Paystack's HMAC signature instead.
+[functions.paystack-webhook]
+verify_jwt = false

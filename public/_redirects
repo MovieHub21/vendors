@@ -1,0 +1,3 @@
+# Netlify / Cloudflare Pages: serve the client-rendered shell for vendor store URLs (/ama-hairs, /ama-hairs/product/...).
+# Real files (prerendered pages, assets, sitemap.xml) are served first because this rule has no "!" force flag.
+/*  /app-shell.html  200
