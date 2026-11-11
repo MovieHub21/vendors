@@ -1,0 +1,31 @@
+{
+  "rewrites": [
+    {
+      "source": "/edusitemap.xml",
+      "destination": "https://ekvpberxjfiyquffpysa.supabase.co/functions/v1/sitemap"
+    },
+    {
+      "source": "/shared-pdf/:shareId",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(bot|crawl|spider|facebook|twitter|whatsapp|telegram|slack|linkedin|discord|preview|fetch|curl|wget|headless).*"
+        }
+      ],
+      "destination": "https://ekvpberxjfiyquffpysa.supabase.co/functions/v1/og-meta?path=/shared-pdf/:shareId"
+    },
+    {
+      "source": "/shared-folder/:shareId",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(bot|crawl|spider|facebook|twitter|whatsapp|telegram|slack|linkedin|discord|preview|fetch|curl|wget|headless).*"
+        }
+      ],
+      "destination": "https://ekvpberxjfiyquffpysa.supabase.co/functions/v1/og-meta?path=/shared-folder/:shareId"
+    },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
