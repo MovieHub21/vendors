@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { Link } from "react-router-dom";
-import { ExternalLink, MessageCircle, Package, Plus, Receipt, Users, Wallet, ShoppingBag } from "lucide-react";
+import { MessageCircle, Package, Plus, Users, Wallet, ShoppingBag } from "lucide-react";
 import { Alert } from "../components/AuthLayout";
 import { DashboardShell, dateTime, PayBadge, StatusBadge } from "../components/DashboardShell";
 import { ShareButton } from "../components/ShareButton";
@@ -154,18 +154,32 @@ function Overview({ me }: { me: Me }) {
       )}
 
       <section className="dash-card dash-store">
-        <h2>Your store</h2>
-        <p>
-          <Link to={storePath(store.slug)}>
-            {SITE.url.replace(/^https?:\/\//, "")}/{store.slug} <ExternalLink size={13} aria-hidden="true" />
-          </Link>{" "}
-          · {store.is_published ? "Live" : "Not live"}
-          {until && ` · Subscription active until ${until}`}
-        </p>
+        <div className="dash-store-head">
+          <div>
+            <p className="dash-store-label">Your store</p>
+            <h2>{store.name}</h2>
+          </div>
+          <span className={`dash-store-status ${store.is_published ? "is-live" : "is-not-live"}`}>
+            {store.is_published ? "Live" : "Not live"}
+          </span>
+        </div>
+
+        <div className="dash-store-info">
+          <div className="dash-store-address">
+            <span className="dash-store-label">Store link</span>
+            <Link to={storePath(store.slug)}>
+              {SITE.url.replace(/^https?:\/\//, "")}/{store.slug}
+            </Link>
+          </div>
+          {until && (
+            <p className="dash-store-subscription">
+              Subscription active until <time dateTime={me.subscription!.current_period_end}>{until}</time>
+            </p>
+          )}
+        </div>
+
         <ShareButton path={storePath(store.slug)} kind="store" title={store.name} text={`Shop at ${store.name}`} />
-        <p className="muted">
-          <Receipt size={13} aria-hidden="true" /> Every order and payment you record keeps its own receipt.
-        </p>
+        <p className="dash-store-note">Every order and payment you record has its own receipt.</p>
       </section>
     </>
   );
