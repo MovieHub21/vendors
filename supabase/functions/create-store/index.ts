@@ -2,6 +2,10 @@
 // Stores are created here (never from the browser) so the username rules and one-store-per-vendor rule are enforced.
 import { HttpError, readJsonObject } from "../_shared/http.ts";
 import { adminClient, requireUser, route } from "../_shared/runtime.ts";
+<<<<<<< HEAD
+import { cleanPhone } from "../_shared/seoFields.ts";
+=======
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 import { parseStoreInput } from "../_shared/validation.ts";
 
 const COLUMNS = "id, slug, name, category, city, state, is_published, status";
@@ -9,7 +13,13 @@ const COLUMNS = "id, slug, name, category, city, state, is_published, status";
 Deno.serve(
   route(["POST"], async (req) => {
     const user = await requireUser(req);
+<<<<<<< HEAD
+    const body = await readJsonObject(req);
+    const input = parseStoreInput(body);
+    const phone = cleanPhone(body.phone, "Phone");
+=======
     const input = parseStoreInput(await readJsonObject(req));
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     const db = adminClient();
 
     const existing = await db.from("stores").select(COLUMNS).eq("owner_id", user.id).maybeSingle();
@@ -29,6 +39,10 @@ Deno.serve(
         category: input.category,
         city: input.city,
         state: input.state,
+<<<<<<< HEAD
+        contact_phone: phone,
+=======
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
         is_published: false, // goes live when the first payment is confirmed
       })
       .select(COLUMNS)

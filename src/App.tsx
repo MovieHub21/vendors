@@ -5,7 +5,13 @@ import MarketingLayout from "./layouts/MarketingLayout";
 import { REDIRECT_ROUTES } from "./lib/routes";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+<<<<<<< HEAD
+import Customers from "./pages/Customers";
 import Dashboard from "./pages/Dashboard";
+import DashboardSeo from "./pages/DashboardSeo";
+=======
+import Dashboard from "./pages/Dashboard";
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 import Faq from "./pages/Faq";
 import Features from "./pages/Features";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -14,12 +20,24 @@ import Legal from "./pages/Legal";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+<<<<<<< HEAD
+import Orders from "./pages/Orders";
+import PaymentResult from "./pages/PaymentResult";
+import Products from "./pages/Products";
+import ReceiptPage from "./pages/ReceiptPage";
+import RecordSale from "./pages/RecordSale";
+import Pricing from "./pages/Pricing";
+import PublicPage from "./pages/public/PublicPage";
+import ResetPassword from "./pages/ResetPassword";
+import Signup from "./pages/Signup";
+=======
 import PaymentResult from "./pages/PaymentResult";
 import Pricing from "./pages/Pricing";
 import ProductPage from "./pages/ProductPage";
 import ResetPassword from "./pages/ResetPassword";
 import Signup from "./pages/Signup";
 import Storefront from "./pages/Storefront";
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 
 /**
  * Route order does not matter: React Router ranks static segments above `/:storeSlug`, so real pages always win.
@@ -59,20 +77,85 @@ export default function App() {
             }
           />
           <Route
+<<<<<<< HEAD
+            path="/dashboard"
+=======
             path="/app"
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
             element={
               <RequireAuth>
                 <Dashboard />
               </RequireAuth>
             }
           />
+<<<<<<< HEAD
+          <Route
+            path="/dashboard/seo"
+            element={
+              <RequireAuth>
+                <DashboardSeo />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard/sale"
+            element={
+              <RequireAuth>
+                <RecordSale />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard/orders"
+            element={
+              <RequireAuth>
+                <Orders />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard/customers"
+            element={
+              <RequireAuth>
+                <Customers />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard/products"
+            element={
+              <RequireAuth>
+                <Products />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard/receipt/:orderId"
+            element={
+              <RequireAuth>
+                <ReceiptPage />
+              </RequireAuth>
+            }
+          />
+=======
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
           <Route path="*" element={<NotFound />} />
         </Route>
         {Object.entries(REDIRECT_ROUTES).map(([from, to]) => (
           <Route key={from} path={from} element={<Navigate to={to} replace />} />
         ))}
+<<<<<<< HEAD
+        {/* Every dynamic public page. The server renders these (src/edge) so crawlers receive real HTML. */}
+        <Route path="/stores" element={<PublicPage />} />
+        <Route path="/stores/:facet" element={<PublicPage />} />
+        <Route path="/:storeSlug" element={<PublicPage />} />
+        <Route path="/:storeSlug/products" element={<PublicPage />} />
+        <Route path="/:storeSlug/about" element={<PublicPage />} />
+        <Route path="/:storeSlug/products/:productSlug" element={<PublicPage />} />
+=======
         <Route path="/:storeSlug" element={<Storefront />} />
         <Route path="/:storeSlug/product/:productSlug" element={<ProductPage />} />
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
       </Routes>
     </ThemeProvider>
   );

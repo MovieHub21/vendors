@@ -5,10 +5,17 @@ type Meta = Pick<PageSeo, "title" | "description" | "path" | "absoluteTitle"> & 
 /** Titles: ≤60 chars including " | SellSharp". Descriptions: 70–160 chars. Enforced by pageMeta.test.ts. */
 export const PAGE_META = {
   home: {
+<<<<<<< HEAD
+    title: "SellSharp – Create Your Online Store in Nigeria",
+    absoluteTitle: true,
+    description:
+      "Create your online store, manage products, receive orders and accept online payments with SellSharp. Start selling your products online in Nigeria.",
+=======
     title: "SellSharp: Online Store & Orders for Nigerian Vendors",
     absoluteTitle: true,
     description:
       "SellSharp gives Nigerian WhatsApp vendors a shareable online store, order dashboard, receipts and debt tracker. Plans from ₦3,000 a month.",
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     path: "/",
   },
   features: {
@@ -91,8 +98,44 @@ export const PAGE_META = {
   },
   dashboard: {
     title: "Dashboard",
+<<<<<<< HEAD
+    description: "Your SellSharp dashboard: sales today, pending orders, who owes you, low stock and shortcuts to record a sale or share your store.",
+    path: "/dashboard",
+  },
+  dashboardSeo: {
+    title: "Store SEO settings",
+    description:
+      "Control how your SellSharp store appears in Google search results and when your link is shared on WhatsApp.",
+    path: "/dashboard/seo",
+  },
+  dashboardSale: {
+    title: "Record a sale",
+    description: "Record a sale from WhatsApp, Instagram, a phone call or a walk-in customer, with the amount paid and the balance worked out for you.",
+    path: "/dashboard/sale",
+  },
+  dashboardOrders: {
+    title: "Orders",
+    description: "See and manage your SellSharp orders: confirm, update the status, record payments and print receipts for your customers.",
+    path: "/dashboard/orders",
+  },
+  dashboardCustomers: {
+    title: "Customers and debts",
+    description: "Your customer list with purchase history, what each customer has paid and who still owes you money, in your SellSharp dashboard.",
+    path: "/dashboard/customers",
+  },
+  dashboardProducts: {
+    title: "Products",
+    description: "Add and edit the products in your SellSharp store: prices, pictures, stock, hiding, duplicating and sharing on WhatsApp.",
+    path: "/dashboard/products",
+  },
+  dashboardReceipt: {
+    title: "Receipt",
+    description: "Preview, print or share a customer receipt from your SellSharp dashboard. Updated receipts keep the original history.",
+    path: "/dashboard/receipt",
+=======
     description: "Your SellSharp dashboard: store link, subscription status and your business overview.",
     path: "/app",
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   },
   notFound: {
     title: "Page not found",

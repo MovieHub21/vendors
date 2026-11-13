@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
+<<<<<<< HEAD
+import {
+  safeNextPath,
+  validateEmail,
+  validateFullName,
+  validatePassword,
+  validatePhone,
+  validateStoreName,
+} from "./validation";
+=======
 import { safeNextPath, validateEmail, validateFullName, validatePassword, validateStoreName } from "./validation";
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 
 describe("validation", () => {
   it("emails", () => {
@@ -18,6 +29,17 @@ describe("validation", () => {
   });
 });
 
+<<<<<<< HEAD
+describe("phone", () => {
+  it("is optional and accepts Nigerian formats", () => {
+    for (const ok of ["", "  ", "08031234567", "+234 803 123 4567", "(0803) 123-4567"])
+      expect(validatePhone(ok), ok).toBeNull();
+    for (const bad of ["call me", "123", "0803abc1234"]) expect(validatePhone(bad), bad).not.toBeNull();
+  });
+});
+
+=======
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 describe("safeNextPath", () => {
   it("keeps same-site paths", () => {
     expect(safeNextPath("/app")).toBe("/app");

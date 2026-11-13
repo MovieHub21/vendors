@@ -12,6 +12,26 @@ import "./styles/marketing.css";
 import "./styles/pages.css";
 import "./styles/storefront.css";
 import "./styles/auth.css";
+<<<<<<< HEAD
+import "./styles/dashboard.css";
+import "./styles/responsive.css";
+import "./styles/utilities.css";
+import App from "./App";
+import type { PreloadedPage } from "./ssr/PreloadedPage";
+import { PreloadedPageContext } from "./ssr/PreloadedPage";
+
+const root = document.getElementById("root")!;
+// Dynamic public pages are rendered on the server (src/edge); the data it used is embedded so we can hydrate without refetching.
+const preloaded = (window as unknown as { __SS_DATA__?: PreloadedPage }).__SS_DATA__ ?? null;
+const app = (
+  <StrictMode>
+    <HelmetProvider>
+      <PreloadedPageContext.Provider value={preloaded}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </PreloadedPageContext.Provider>
+=======
 import "./styles/responsive.css";
 import "./styles/utilities.css";
 import App from "./App";
@@ -23,6 +43,7 @@ const app = (
       <BrowserRouter>
         <App />
       </BrowserRouter>
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     </HelmetProvider>
   </StrictMode>
 );

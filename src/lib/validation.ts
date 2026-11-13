@@ -48,3 +48,10 @@ export const SLUG_MESSAGES: Record<string, string> = {
   reserved: "That name is reserved. Try another.",
   taken: "That username is already taken.",
 };
+<<<<<<< HEAD
+
+/** Optional business phone. Accepts local (0803…) and international (+234…) formats. */
+export const validatePhone = (v: string): string | null =>
+  v.trim() === "" || /^\+?[0-9 ()-]{7,20}$/.test(v.trim()) ? null : "Enter a valid phone number, e.g. 0803 123 4567.";
+=======
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c

@@ -71,7 +71,11 @@ export default function PaymentResult() {
             </Link>
           </p>
         )}
+<<<<<<< HEAD
+        <Link to="/dashboard" className="btn btn-primary btn-full">
+=======
         <Link to="/app" className="btn btn-primary btn-full">
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
           Go to your dashboard <ArrowRight size={16} />
         </Link>
       </>

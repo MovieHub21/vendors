@@ -14,7 +14,7 @@ build/
 # Supabase Edge Functions environment files
 supabase/functions/.env
 supabase/functions/.env.*
-!supabase/functions/.env.example
+supabase/functions/.env.example
 
 # Logs
 logs/

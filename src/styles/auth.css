@@ -35,9 +35,22 @@
 .auth-card form > * + * {
   margin-top: 16px;
 }
+<<<<<<< HEAD
+.field {
+  margin-bottom: 16px;
+}
+.field:last-child,
+.field-row .field {
+  margin-bottom: 0;
+}
+.field label {
+  display: block;
+  margin-bottom: 4px;
+=======
 .field label {
   display: block;
   margin-bottom: 6px;
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   font-size: 13px;
   font-weight: 600;
 }
@@ -111,6 +124,13 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
+<<<<<<< HEAD
+  margin-bottom: 16px;
+}
+.field-row:last-child {
+  margin-bottom: 0;
+=======
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 }
 .slug-ok {
   display: inline-flex;

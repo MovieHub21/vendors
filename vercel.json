@@ -1,31 +1,48 @@
 {
+
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
-      "source": "/edusitemap.xml",
-      "destination": "https://ekvpberxjfiyquffpysa.supabase.co/functions/v1/sitemap"
+      "source": "/sitemap.xml",
+      "destination": "/sitemap.xml"
     },
     {
-      "source": "/shared-pdf/:shareId",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "(?i).*(bot|crawl|spider|facebook|twitter|whatsapp|telegram|slack|linkedin|discord|preview|fetch|curl|wget|headless).*"
-        }
-      ],
-      "destination": "https://ekvpberxjfiyquffpysa.supabase.co/functions/v1/og-meta?path=/shared-pdf/:shareId"
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
     },
     {
-      "source": "/shared-folder/:shareId",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "(?i).*(bot|crawl|spider|facebook|twitter|whatsapp|telegram|slack|linkedin|discord|preview|fetch|curl|wget|headless).*"
-        }
-      ],
-      "destination": "https://ekvpberxjfiyquffpysa.supabase.co/functions/v1/og-meta?path=/shared-folder/:shareId"
-    },
-    { "source": "/(.*)", "destination": "/" }
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+
   ]
 }

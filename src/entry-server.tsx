@@ -2,6 +2,21 @@ import { renderToString } from "react-dom/server";
 import { HelmetProvider, type HelmetServerState } from "react-helmet-async";
 import { StaticRouter } from "react-router-dom/server";
 import App from "./App";
+<<<<<<< HEAD
+import { PreloadedPageContext, type PreloadedPage } from "./ssr/PreloadedPage";
+import { INDEXABLE_ROUTES } from "./lib/routes";
+import { SITE } from "./lib/site";
+
+export function render(url: string, preloaded: PreloadedPage | null = null) {
+  const helmetContext: { helmet?: HelmetServerState } = {};
+  const html = renderToString(
+    <HelmetProvider context={helmetContext}>
+      <PreloadedPageContext.Provider value={preloaded}>
+        <StaticRouter location={url}>
+          <App />
+        </StaticRouter>
+      </PreloadedPageContext.Provider>
+=======
 import { INDEXABLE_ROUTES } from "./lib/routes";
 import { SITE } from "./lib/site";
 
@@ -12,6 +27,7 @@ export function render(url: string) {
       <StaticRouter location={url}>
         <App />
       </StaticRouter>
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     </HelmetProvider>,
   );
   const h = helmetContext.helmet!;

@@ -33,9 +33,15 @@ export default function Home() {
               <span className="announcement-dot" /> A simpler way to run your online business <ArrowUpRight size={13} />
             </div>
             <h1>
+<<<<<<< HEAD
+              Your business deserves
+              <br />
+              its own <em>online store</em>.
+=======
               Your business,
               <br />
               in <em>better</em> order.
+>>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
             </h1>
             <p className="hero-sub">
               Orders in your chats. Customers in your head. Payments in different places. Bring it all together with one
