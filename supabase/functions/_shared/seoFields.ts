@@ -22,6 +22,18 @@ export function cleanText(value: unknown, field: string, max: number, min = 0): 
   return v;
 }
 
+/** Plain text validator for descriptions that keeps intentional paragraph and line breaks. */
+export function cleanMultilineText(value: unknown, field: string, max: number, min = 0): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") throw new HttpError(422, "invalid_input", `${field} must be text`);
+  const v = value.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, " ").trim();
+  if (v === "") return null;
+  if (MARKUP.test(v)) throw new HttpError(422, "invalid_input", `${field} cannot contain < or >`);
+  if (v.length > max) throw new HttpError(422, "invalid_input", `${field} must be ${max} characters or fewer`);
+  if (v.length < min) throw new HttpError(422, "invalid_input", `${field} must be at least ${min} characters`);
+  return v;
+}
+
 export function cleanHttpsUrl(value: unknown, field: string): string | null {
   const v = cleanText(value, field, 500);
   if (v === null) return null;
@@ -140,7 +152,7 @@ export function parseStoreSeoUpdate(body: Record<string, unknown>): StoreSeoUpda
     if (c === null) throw new HttpError(422, "invalid_input", "Category is required");
     out.category = c;
   }
-  if (has("description")) out.description = cleanText(body.description, "Description", 1000) ?? "";
+  if (has("description")) out.description = cleanMultilineText(body.description, "Description", 1000) ?? "";
   if (has("indexable")) {
     if (typeof body.indexable !== "boolean")
       throw new HttpError(422, "invalid_input", "indexable must be true or false");

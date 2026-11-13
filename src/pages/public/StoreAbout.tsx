@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Seo } from "../../components/Seo";
 import { StoreShell } from "../../components/StoreShell";
-import { directoryPath, storePath, storeProductsPath } from "../../lib/routes";
+import { directoryPath, storePath } from "../../lib/routes";
 import { buildStoreAboutSeo } from "../../lib/seo";
 import type { VendorStore } from "../../types/store";
 
@@ -26,7 +26,7 @@ export function StoreAbout({ store }: { store: VendorStore }) {
             </>
           )}
           </p>
-          <Link className="btn btn-primary" to={storeProductsPath(store.slug)}>Browse the collection</Link>
+          <Link className="btn btn-primary" to={storePath(store.slug)}>View products</Link>
         </article>
       </div>
     </StoreShell>

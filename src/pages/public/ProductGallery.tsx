@@ -3,12 +3,12 @@ import { ResponsiveImage } from "../../components/ResponsiveImage";
 import type { Product } from "../../types/store";
 
 /** Swipeable product photos with a count on phones and selectable thumbnails on larger screens. */
-export function ProductGallery({ images, name }: { images: Product["images"]; name: string }) {
+export function ProductGallery({ images, name, isAvailable }: { images: Product["images"]; name: string; isAvailable: boolean }) {
   const track = useRef<HTMLUListElement>(null);
   const [active, setActive] = useState(0);
 
   if (images.length === 0) {
-    return <div className="sf-gallery"><span className="sf-img sf-img-0 sf-img-large" aria-hidden="true" /></div>;
+    return <div className="sf-gallery"><div className="sf-gallery-stage"><span className="sf-img sf-img-0 sf-img-large" aria-hidden="true" /><span className={`sf-gallery-stock${isAvailable ? "" : " is-unavailable"}`}>{isAvailable ? "In stock" : "Out of stock"}</span></div></div>;
   }
 
   function goTo(index: number) {
@@ -24,6 +24,7 @@ export function ProductGallery({ images, name }: { images: Product["images"]; na
   return (
     <div className="sf-gallery">
       <div className="sf-gallery-stage">
+        <span className={`sf-gallery-stock${isAvailable ? "" : " is-unavailable"}`}>{isAvailable ? "In stock" : "Out of stock"}</span>
         <ul ref={track} className="sf-gallery-track" onScroll={updateActive} aria-label={`${name} photos`}>
           {images.map((image, index) => (
             <li key={image.url}>

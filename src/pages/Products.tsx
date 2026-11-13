@@ -91,8 +91,10 @@ async function uploadProductPhoto(file: File): Promise<string> {
   return supabase.storage.from(bucket).getPublicUrl(filename).data.publicUrl;
 }
 
-function ProductForm({ initial, status, onSaved, onCancel }: { initial: FormState; status?: ProductRow["status"]; onSaved: (msg: string) => void; onCancel: () => void }) {
+function ProductForm({ initial, status, categories, onSaved, onCancel }: { initial: FormState; status?: ProductRow["status"]; categories: string[]; onSaved: (msg: string) => void; onCancel: () => void }) {
   const [f, setF] = useState(initial);
+  const [addingCategory, setAddingCategory] = useState(Boolean(initial.category && !categories.some((category) => category.toLowerCase() === initial.category.toLowerCase())));
+  const [newCategory, setNewCategory] = useState(addingCategory ? initial.category : "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -106,6 +108,11 @@ function ProductForm({ initial, status, onSaved, onCancel }: { initial: FormStat
     () => f.images.split("\n").map((s) => s.trim()).filter(Boolean),
     [f.images]
   );
+  const categoryOptions = useMemo(() => {
+    const options = [...categories];
+    if (f.category && !options.some((category) => category.toLowerCase() === f.category.toLowerCase())) options.push(f.category);
+    return options;
+  }, [categories, f.category]);
 
   const updateImages = (urls: string[]) => set("images", urls.join("\n"));
 
@@ -173,6 +180,7 @@ function ProductForm({ initial, status, onSaved, onCancel }: { initial: FormStat
     e.preventDefault();
     setError(null);
     if (f.name.trim().length < 2) return setError("Give the product a name (at least 2 letters).");
+    if (addingCategory && !newCategory.trim()) return setError("Enter a name for the new category.");
     const price = nairaToKobo(f.price);
     if (!price || price < 1) return setError("Enter the price in naira, for example 25,000.");
     let stock: number | null = null;
@@ -188,7 +196,9 @@ function ProductForm({ initial, status, onSaved, onCancel }: { initial: FormStat
       name: f.name.trim(),
       price_kobo: price,
       description: f.description.trim(),
-      category: f.category.trim() || null,
+      category: addingCategory
+        ? categories.find((category) => category.toLowerCase() === newCategory.trim().toLowerCase()) ?? newCategory.trim()
+        : f.category.trim() || null,
       stock_quantity: stock,
       is_available: f.available,
       // A hidden (archived) product stays hidden unless the vendor ticks "Show in my store".
@@ -206,7 +216,18 @@ function ProductForm({ initial, status, onSaved, onCancel }: { initial: FormStat
       <Field label="Product name" value={f.name} maxLength={120} onChange={(e) => set("name", e.target.value)} />
       <div className="field-row">
         <Field label="Price (₦)" inputMode="decimal" value={f.price} onChange={(e) => set("price", e.target.value)} />
-        <Field label="Category (optional)" value={f.category} maxLength={40} onChange={(e) => set("category", e.target.value)} />
+        <div className="field">
+          <label htmlFor="pf-category">Category (optional)</label>
+          <select id="pf-category" value={addingCategory ? "__new_category__" : f.category} onChange={(e) => {
+            if (e.target.value === "__new_category__") setAddingCategory(true);
+            else { setAddingCategory(false); set("category", e.target.value); setNewCategory(""); }
+          }}>
+            <option value="">No category</option>
+            {categoryOptions.map((category) => <option value={category} key={category}>{category}</option>)}
+            <option value="__new_category__">Add a new category…</option>
+          </select>
+          {addingCategory && <input className="new-category-input" aria-label="New category name" maxLength={40} value={newCategory} placeholder="Enter category name" onChange={(e) => setNewCategory(e.target.value)} />}
+        </div>
       </div>
       <div className="field">
         <label htmlFor="pf-desc">Description</label>
@@ -216,8 +237,8 @@ function ProductForm({ initial, status, onSaved, onCancel }: { initial: FormStat
       <Field label="Stock quantity (optional)" inputMode="numeric" value={f.stock} onChange={(e) => set("stock", e.target.value)} hint="Leave empty if you don't count stock. Stock goes down when a sale is confirmed." />
       <div className="field">
         <label>Product pictures ({imageList.length}/8)</label>
-        <small className="field-hint" style={{ marginBottom: "10px", display: "block" }}>
-          The first photo is the <strong>Cover photo</strong> used for your storefront, Google search results, and WhatsApp previews.
+        <small className="field-hint product-photo-hint">
+          First photo is the cover.
         </small>
 
         {imageList.length > 0 && (
@@ -290,26 +311,23 @@ function ProductForm({ initial, status, onSaved, onCancel }: { initial: FormStat
               />
               <button
                 type="button"
-                className="btn btn-outline btn-small"
+                className="btn btn-outline btn-small image-upload-button"
                 disabled={uploading}
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload size={14} aria-hidden="true" />
                 {uploading
                   ? (uploadProgress ?? "Uploading…")
-                  : `Upload photo${8 - imageList.length > 1 ? "s" : ""} from device`}
+                  : "Upload photos from device"}
               </button>
-              {!uploading && imageList.length < 8 && (
-                <small className="field-hint" style={{ marginTop: 4 }}>
-                  You can select up to {8 - imageList.length} more photo{8 - imageList.length === 1 ? "" : "s"} at once. Large images are auto-compressed.
-                </small>
-              )}
             </div>
           </div>
         )}
       </div>
-      <label className="check"><input type="checkbox" checked={f.available} onChange={(e) => set("available", e.target.checked)} /> In stock / available to order</label>
-      <label className="check"><input type="checkbox" checked={f.published} onChange={(e) => set("published", e.target.checked)} /> Show in my store</label>
+      <div className="product-form-options">
+        <label className="check"><input type="checkbox" checked={f.available} onChange={(e) => set("available", e.target.checked)} /> In stock / available to order</label>
+        <label className="check"><input type="checkbox" checked={f.published} onChange={(e) => set("published", e.target.checked)} /> Show in my store</label>
+      </div>
       {error && <Alert kind="error">{error}</Alert>}
       <div className="quick-actions">
         <button className="btn btn-primary" disabled={busy}>{busy ? "Saving…" : "Save product"}</button>
@@ -347,6 +365,14 @@ function ProductsView({ storeSlug }: { storeSlug: string }) {
       return true;
     });
   }, [rows, q, filter]);
+  const categories = useMemo(() => {
+    const byNormalizedName = new Map<string, string>();
+    for (const category of (rows ?? []).map((product) => product.category?.trim()).filter((value): value is string => Boolean(value))) {
+      const normalized = category.toLocaleLowerCase();
+      if (!byNormalizedName.has(normalized)) byNormalizedName.set(normalized, category);
+    }
+    return [...byNormalizedName.values()].sort((a, b) => a.localeCompare(b));
+  }, [rows]);
 
   async function act(p: ProductRow, action: "duplicate" | "hide" | "show" | "delete") {
     if (action === "delete" && !window.confirm(`Delete “${p.name}”? Past orders keep their details. This can't be undone.`)) return;
@@ -372,6 +398,7 @@ function ProductsView({ storeSlug }: { storeSlug: string }) {
           key={editing.form.id ?? "new"}
           initial={editing.form}
           status={editing.status}
+          categories={categories}
           onCancel={closeForm}
           onSaved={(m) => {
             setNotice(m);

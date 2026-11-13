@@ -1,14 +1,19 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { storeAboutPath, storePath, storeProductsPath } from "../lib/routes";
+import { storeAboutPath, storePath } from "../lib/routes";
 import { SITE } from "../lib/site";
 import type { VendorStore } from "../types/store";
 import { ThemeToggle } from "./ThemeToggle";
-import { MessageCircle } from "lucide-react";
+import { AtSign, Facebook, Ghost, Globe, Instagram, Linkedin, MessageCircle, Music2, Pin, X as XBrand, Youtube, type LucideIcon } from "lucide-react";
 import { formatNaira } from "../lib/money";
 import { whatsappLink, whatsappNumber } from "../lib/sales";
 import { CartDrawer } from "./CartDrawer";
 import { useCart } from "../storefront/CartContext";
+
+const SOCIAL_ICONS: Record<string, LucideIcon> = {
+  Instagram, Facebook, TikTok: Music2, YouTube: Youtube, X: XBrand, Threads: AtSign,
+  Snapchat: Ghost, Pinterest: Pin, LinkedIn: Linkedin, Other: Globe,
+};
 
 /** Vendor-branded chrome for storefront pages. The vendor's name leads; SellSharp is a quiet credit in the footer. */
 export function StoreShell({ store, children }: { store: VendorStore; children: ReactNode }) {
@@ -25,7 +30,10 @@ export function StoreShell({ store, children }: { store: VendorStore; children: 
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      {socialLinks.length > 0 && <div className="sf-social-strip"><div className="container sf-social-strip-inner"><span>Follow us</span><nav aria-label={`Follow ${store.name}`}>{socialLinks.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noopener noreferrer">{label}</a>)}</nav></div></div>}
+      {socialLinks.length > 0 && <div className="sf-social-strip"><div className="container sf-social-strip-inner"><span>Follow us</span><nav aria-label={`Follow ${store.name}`}>{socialLinks.map(([label, href]) => {
+        const Icon = SOCIAL_ICONS[label] ?? Globe;
+        return <a key={label} className="sf-social-link" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${store.name} on ${label}`} title={label}><Icon size={16} strokeWidth={2} aria-hidden="true" /></a>;
+      })}</nav></div></div>}
       <header className="sf-header">
         <div className="container sf-header-inner">
           <Link to={storePath(store.slug)} className="sf-brand">
@@ -33,10 +41,11 @@ export function StoreShell({ store, children }: { store: VendorStore; children: 
           </Link>
           <nav className="sf-nav" aria-label="Store">
             <Link to={storePath(store.slug)}>Shop</Link>
-            <Link to={storeProductsPath(store.slug)}>Products</Link>
             <Link to={storeAboutPath(store.slug)}>About</Link>
           </nav>
-          <button className="sf-cart-button" type="button" onClick={() => cart.openCart(store.slug)}>Cart{cart.count(store.slug) > 0 ? ` · ${cart.count(store.slug)}` : ""}</button>
+          <button type="button" className="sf-header-cart" onClick={() => cart.openCart(store.slug)} aria-label={`Open cart${cart.count(store.slug) ? `, ${cart.count(store.slug)} items` : ""}`}>
+            Cart{cart.count(store.slug) > 0 && <span>{cart.count(store.slug)}</span>}
+          </button>
           <ThemeToggle />
         </div>
       </header>

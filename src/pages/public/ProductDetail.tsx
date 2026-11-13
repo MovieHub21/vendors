@@ -9,6 +9,7 @@ import { buildProductSeo, storeLocation } from "../../lib/seo";
 import type { Product, VendorStore } from "../../types/store";
 import { ProductCard } from "./ProductCard";
 import { ProductGallery } from "./ProductGallery";
+import { useCart } from "../../storefront/CartContext";
 
 export function ProductDetail({
   store,
@@ -19,6 +20,8 @@ export function ProductDetail({
   product: Product;
   related: Product[];
 }) {
+  const cart = useCart();
+  const itemCountInCart = cart.count(store.slug);
   return (
     <StoreShell store={store}>
       <Seo seo={buildProductSeo(store, product)} />
@@ -29,19 +32,14 @@ export function ProductDetail({
           <span>{product.name}</span>
         </nav>
         <div className="sf-product-layout">
-          <ProductGallery images={product.images} name={product.name} />
+          <ProductGallery images={product.images} name={product.name} isAvailable={product.isAvailable} />
           <div className="sf-product-info">
             <h1 className="sf-h1">{product.name}</h1>
             <p className="sf-price sf-price-large">{formatNaira(product.priceKobo)}</p>
-            <p className={product.isAvailable ? "sf-stock" : "sf-soldout"}>
-              {product.isAvailable ? "In stock" : "Out of stock"}
-            </p>
             <p className="sf-vendor">
               Sold by <Link to={storePath(store.slug)}>{store.name}</Link> · {storeLocation(store)}
             </p>
-            {product.description.split(/\n{2,}/).map((para, i) => (
-              <p key={i}>{para}</p>
-            ))}
+            {product.description && <p className="sf-product-description">{product.description}</p>}
             {store.isDemo ? (
               <button className="btn btn-primary" type="button" disabled>
                 Ordering is disabled on demo stores
@@ -64,7 +62,10 @@ export function ProductDetail({
         {!store.isDemo && (
           <div className="sf-buybar">
             <div className="sf-buybar-price"><span>Price</span><b>{formatNaira(product.priceKobo)}</b></div>
-            <AddToCartButton storeSlug={store.slug} product={product} />
+            <div className="sf-buybar-actions">
+              <AddToCartButton storeSlug={store.slug} product={product} />
+              {itemCountInCart > 0 && <button className="btn btn-outline sf-buybar-view-cart" type="button" onClick={() => cart.openCart(store.slug)}>View cart</button>}
+            </div>
           </div>
         )}
         {related.length > 0 && (

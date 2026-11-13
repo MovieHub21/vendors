@@ -1,6 +1,6 @@
 /** Product input validation + slug generation. Pure (no Deno APIs) so it is unit-tested in Node. */
 import { HttpError } from "./http.ts";
-import { cleanHttpsUrl, cleanText } from "./seoFields.ts";
+import { cleanHttpsUrl, cleanMultilineText, cleanText } from "./seoFields.ts";
 
 export const PRODUCT_STATUSES = ["draft", "published", "archived"] as const;
 export const MAX_PRODUCT_KOBO = 2_000_000_000; // products.price_kobo is a 32-bit integer
@@ -50,7 +50,7 @@ export function parseProduct(body: Record<string, unknown>, creating: boolean): 
     if (name === null) throw new HttpError(422, "invalid_input", "Product name is required");
     out.name = name;
   }
-  if (has("description")) out.description = cleanText(body.description, "Description", 5000) ?? "";
+  if (has("description")) out.description = cleanMultilineText(body.description, "Description", 5000) ?? "";
   if (has("price_kobo") || creating) {
     const p = body.price_kobo;
     if (typeof p !== "number" || !Number.isSafeInteger(p) || p < 1 || p > MAX_PRODUCT_KOBO) {

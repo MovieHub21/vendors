@@ -9,7 +9,7 @@ import { productPath, storeProductsPath } from "../../lib/routes";
 import { formatNaira } from "../../lib/money";
 import type { Product, VendorStore } from "../../types/store";
 
-const categoriesOf = (products: Product[]) => [...new Set(products.map((product) => product.category?.trim()).filter((x): x is string => Boolean(x)))].slice(0, 8);
+const categoriesOf = (products: Product[]) => [...new Set(products.map((product) => product.category?.trim()).filter((x): x is string => Boolean(x)))].sort((a, b) => a.localeCompare(b));
 
 export function ShowcaseStoreHome({ store, products, includeSeo = true }: { store: VendorStore; products: Product[]; includeSeo?: boolean }) {
   const categories = useMemo(() => categoriesOf(products), [products]);
@@ -36,10 +36,13 @@ export function ShowcaseStoreHome({ store, products, includeSeo = true }: { stor
       {categories.length > 0 && (
         <section className="container showcase-categories" aria-labelledby="showcase-categories-title">
           <h2 id="showcase-categories-title">{store.categoryHeading || "Shop by category"}</h2>
-          <div className="showcase-category-list">
-            <button type="button" className={!activeCategory ? "selected" : ""} onClick={() => setActiveCategory(null)}>All</button>
-            {categories.map((category) => <button type="button" key={category} className={activeCategory === category ? "selected" : ""} onClick={() => setActiveCategory(activeCategory === category ? null : category)}>{category}</button>)}
-          </div>
+          <label className="showcase-category-filter">
+            <span className="sr-only">Filter products by category</span>
+            <select value={activeCategory ?? ""} onChange={(e) => setActiveCategory(e.target.value || null)}>
+              <option value="">All categories</option>
+              {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+            </select>
+          </label>
         </section>
       )}
 

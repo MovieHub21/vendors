@@ -49,7 +49,7 @@ function makePreviewStore(store: NonNullable<Me["store"]>, layout: Layout, value
   const slug = (value: string | null | undefined) => (value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return {
     id: store.id, slug: store.slug, name: store.name, tagline: values.tagline || undefined,
-    description: store.description, category: store.category, categorySlug: slug(store.category),
+    description: values.about_description ?? store.description, category: store.category, categorySlug: slug(store.category),
     city: store.city ?? undefined, citySlug: slug(store.city), state: store.state ?? undefined, stateSlug: slug(store.state),
     logoUrl: store.logo_url ?? undefined, coverUrl: values.cover_url || undefined,
     contactPhone: store.contact_phone ?? undefined, storefrontLayout: layout,
@@ -107,6 +107,7 @@ function DesignForm({ me }: { me: Me }) {
   const store = me.store!;
   const [layout, setLayout] = useState<Layout>(store.storefront_layout ?? "showcase");
   const [values, setValues] = useState<Record<string, string>>({
+    about_description: store.description ?? "",
     cover_url: store.cover_url ?? "",
     tagline: store.tagline ?? "",
     hero_eyebrow: store.hero_eyebrow ?? "",
@@ -183,6 +184,7 @@ function DesignForm({ me }: { me: Me }) {
     if (invalidImages) return setError("Use public HTTPS image links for all storefront images.");
     setBusy(true);
     const result = await updateStoreSeo({
+      description: values.about_description,
       storefront_layout: layout,
       cover_url: values.cover_url.trim(),
       tagline: values.tagline.trim(),
@@ -229,6 +231,7 @@ function DesignForm({ me }: { me: Me }) {
         </fieldset>
 
         <section className="design-fields-group"><h3>Store introduction</h3>
+          <div className="field"><label htmlFor="design-about-copy">About page information</label><textarea id="design-about-copy" rows={6} value={values.about_description} maxLength={1000} placeholder="Tell customers about your store, what you offer and what makes it special." onChange={(e) => set("about_description", e.target.value)} /><small className="field-hint">Up to 1,000 characters. Line breaks will appear on your About page.</small></div>
           <Field label="Hero eyebrow (optional)" value={values.hero_eyebrow} maxLength={50} placeholder={store.category || "Your collection"} onChange={(e) => set("hero_eyebrow", e.target.value)} />
           <Field label="Hero headline" value={values.hero_title} maxLength={90} placeholder={values.tagline || "Find your next favourite."} onChange={(e) => set("hero_title", e.target.value)} />
           <div className="field"><label htmlFor="design-hero-copy">Hero description</label><textarea id="design-hero-copy" rows={3} value={values.hero_description} maxLength={200} placeholder={store.description || "Introduce your store to customers."} onChange={(e) => set("hero_description", e.target.value)} /><small className="field-hint">Up to 200 characters.</small></div>

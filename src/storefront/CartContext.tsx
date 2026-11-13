@@ -48,10 +48,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [carts, ready]);
 
   const add = useCallback((storeSlug: string, product: Product) => setCarts((current) => {
-    const lines = [...(current[storeSlug] ?? [])];
-    const existing = lines.find((line) => line.product_id === product.id);
-    if (existing) existing.quantity = Math.min(100, existing.quantity + 1);
-    else lines.push({ product_id: product.id, slug: product.slug, name: product.name, price_kobo: product.priceKobo, image_url: product.images[0]?.url ?? null, quantity: 1 });
+    const currentLines = current[storeSlug] ?? [];
+    const exists = currentLines.some((line) => line.product_id === product.id);
+    const lines = exists
+      ? currentLines.map((line) => line.product_id === product.id ? { ...line, quantity: Math.min(100, line.quantity + 1) } : line)
+      : [...currentLines, { product_id: product.id, slug: product.slug, name: product.name, price_kobo: product.priceKobo, image_url: product.images[0]?.url ?? null, quantity: 1 }];
     return { ...current, [storeSlug]: lines };
   }), []);
   const setQuantity = useCallback((storeSlug: string, productId: string, quantity: number) => setCarts((current) => ({
