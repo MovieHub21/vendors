@@ -272,20 +272,7 @@ create policy "stores: owner reads own" on public.stores
 revoke all on public.stores from anon, authenticated;
 grant select on public.stores to authenticated;
 
-<<<<<<< HEAD
 -- The public read surface (public_stores and friends) is defined in 0500_seo.sql, next to the indexing rules it depends on.
-=======
--- What the public (and the storefront / link-preview function) may see: published, active stores only,
--- and never the owner's id. The view runs with its owner's rights, so anon needs no access to the table itself.
-create or replace view public.public_stores as
-  select id, slug, name, tagline, description, category, city, state,
-         logo_url, cover_url, seo_title, seo_description, created_at, updated_at
-  from public.stores
-  where is_published and status = 'active';
-
-revoke all on public.public_stores from anon, authenticated;
-grant select on public.public_stores to anon, authenticated;
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 
 -- ============================================================
 -- 20261111000400_billing.sql
@@ -480,7 +467,6 @@ grant execute on function public.expire_lapsed_subscriptions() to service_role;
 
 -- Optional: schedule it with pg_cron (Database → Extensions → enable "pg_cron", then run this once):
 -- select cron.schedule('expire-lapsed-subscriptions', '15 0 * * *', $$ select public.expire_lapsed_subscriptions(); $$);
-<<<<<<< HEAD
 
 -- ============================================================
 -- 20261111000500_seo.sql
@@ -1566,5 +1552,258 @@ grant execute on function
   public.generate_receipt(uuid, uuid),
   public.dashboard_summary(uuid, integer)
   to service_role;
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
+-- ============================================================
+-- 20261113000100_directory_fix.sql
+-- ============================================================
+-- =============================================================================
+-- Migration: Fix directory views so ALL published/active stores are counted
+-- and shown — not just fully SEO-eligible ones. Also fixes:
+--   • Category counts (now counts all public_stores rows, not just indexable)
+--   • Location deduplication (Lagos city vs Lagos state, Abuja vs FCT Abuja)
+-- =============================================================================
+
+-- ── Category facets ───────────────────────────────────────────────────────────
+-- Drop and recreate so we can change the base filter from is_indexable to all.
+DROP VIEW IF EXISTS public.public_directory_categories;
+
+CREATE VIEW public.public_directory_categories AS
+  SELECT
+    category_slug                   AS slug,
+    min(category)                   AS name,
+    count(*)::int                   AS store_count
+  FROM public.public_stores
+  WHERE category_slug IS NOT NULL
+    AND category_slug <> ''
+  GROUP BY category_slug;
+
+-- ── Location facets ───────────────────────────────────────────────────────────
+-- Deduplicate: emit state rows always; emit city rows ONLY when the city slug
+-- differs from the state slug (prevents "Lagos" appearing twice because both
+-- city="Lagos" and state="Lagos" slugify to "lagos").
+DROP VIEW IF EXISTS public.public_directory_locations;
+
+CREATE VIEW public.public_directory_locations AS
+  -- State-level entries
+  SELECT
+    'state'::text   AS kind,
+    state_slug      AS slug,
+    min(state)      AS name,
+    count(*)::int   AS store_count
+  FROM public.public_stores
+  WHERE state_slug IS NOT NULL
+    AND state_slug <> ''
+  GROUP BY state_slug
+
+  UNION ALL
+
+  -- City-level entries — only when city slug ≠ state slug
+  SELECT
+    'city'::text    AS kind,
+    city_slug       AS slug,
+    min(city)       AS name,
+    count(*)::int   AS store_count
+  FROM public.public_stores
+  WHERE city_slug  IS NOT NULL
+    AND city_slug  <> ''
+    AND city_slug  <> state_slug
+  GROUP BY city_slug;
+
+-- ============================================================
+-- 20261113000200_storage_buckets.sql
+-- ============================================================
+-- =============================================================================
+-- Migration: Create the product-images Supabase Storage bucket and its
+-- Row-Level Security policies so vendors can upload product photos.
+--
+-- Run this ONCE in the Supabase SQL Editor (Dashboard → SQL Editor → New query).
+-- =============================================================================
+
+-- ── Bucket ────────────────────────────────────────────────────────────────────
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'product-images',
+  'product-images',
+  true,
+  5242880,   -- 5 MB per file
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- ── RLS policies ─────────────────────────────────────────────────────────────
+
+-- 1. Anyone (including unauthenticated visitors) can VIEW product images
+CREATE POLICY "Anyone can view product images"
+  ON storage.objects FOR SELECT
+  TO public
+  USING (bucket_id = 'product-images');
+
+-- 2. Authenticated vendors can UPLOAD product images
+CREATE POLICY "Authenticated users can upload product images"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'product-images');
+
+-- 3. Authenticated vendors can UPDATE (replace) their own images
+CREATE POLICY "Authenticated users can update product images"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (bucket_id = 'product-images');
+
+-- 4. Authenticated vendors can DELETE their own images
+CREATE POLICY "Authenticated users can delete product images"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'product-images');
+
+-- ============================================================
+-- 20261113000200_storefront_design.sql
+-- ============================================================
+-- Storefront settings, safe to apply when only the original store schema exists or
+-- when the later Showcase migration has already been applied. Keep public_stores'
+-- existing columns in place and append every supported design field in stable order.
+alter table public.stores
+  add column if not exists storefront_layout text not null default 'showcase',
+  add column if not exists hero_eyebrow text,
+  add column if not exists hero_title text,
+  add column if not exists hero_description text,
+  add column if not exists hero_button_text text,
+  add column if not exists category_heading text,
+  add column if not exists products_heading text,
+  add column if not exists promo_one_title text,
+  add column if not exists promo_one_text text,
+  add column if not exists promo_one_image_url text,
+  add column if not exists promo_two_title text,
+  add column if not exists promo_two_text text,
+  add column if not exists promo_two_image_url text,
+  add column if not exists facebook_url text,
+  add column if not exists instagram_url text,
+  add column if not exists tiktok_url text,
+  add column if not exists youtube_url text,
+  add column if not exists x_url text,
+  add column if not exists threads_url text,
+  add column if not exists snapchat_url text,
+  add column if not exists pinterest_url text,
+  add column if not exists linkedin_url text,
+  add column if not exists other_social_label text,
+  add column if not exists other_social_url text;
+
+alter table public.stores drop constraint if exists stores_storefront_layout_check;
+alter table public.stores add constraint stores_storefront_layout_check
+  check (storefront_layout in ('editorial', 'classic', 'minimal', 'showcase'));
+alter table public.stores alter column storefront_layout set default 'showcase';
+update public.stores set storefront_layout = 'showcase' where storefront_layout = 'editorial';
+
+alter table public.stores drop constraint if exists stores_showcase_copy_lengths;
+alter table public.stores add constraint stores_showcase_copy_lengths check (
+  (hero_eyebrow is null or char_length(hero_eyebrow) <= 50) and
+  (hero_title is null or char_length(hero_title) <= 90) and
+  (hero_description is null or char_length(hero_description) <= 200) and
+  (hero_button_text is null or char_length(hero_button_text) <= 32) and
+  (category_heading is null or char_length(category_heading) <= 50) and
+  (products_heading is null or char_length(products_heading) <= 60) and
+  (promo_one_title is null or char_length(promo_one_title) <= 60) and
+  (promo_one_text is null or char_length(promo_one_text) <= 140) and
+  (promo_two_title is null or char_length(promo_two_title) <= 60) and
+  (promo_two_text is null or char_length(promo_two_text) <= 140) and
+  (other_social_label is null or char_length(other_social_label) <= 32)
+);
+
+create or replace view public.public_stores as
+  select s.id, s.slug, s.name, s.tagline, s.description,
+         s.category, public.slugify(s.category) as category_slug,
+         s.city, public.slugify(s.city) as city_slug,
+         s.state, public.slugify(s.state) as state_slug,
+         s.logo_url, s.cover_url, s.og_image_url, s.seo_title, s.seo_description,
+         cardinality(private.store_problems(s)) = 0 as is_indexable,
+         (select count(*) from public.products p where p.store_id = s.id and p.status = 'published')::int as product_count,
+         s.created_at, s.updated_at,
+         greatest(s.updated_at, coalesce((select max(p.updated_at) from public.products p
+                                           where p.store_id = s.id and p.status = 'published'), s.updated_at)) as last_modified,
+         s.contact_phone,
+         s.storefront_layout,
+         s.hero_eyebrow, s.hero_title, s.hero_description, s.hero_button_text, s.category_heading, s.products_heading,
+         s.promo_one_title, s.promo_one_text, s.promo_one_image_url,
+         s.promo_two_title, s.promo_two_text, s.promo_two_image_url,
+         s.facebook_url, s.instagram_url, s.tiktok_url, s.youtube_url, s.x_url, s.threads_url,
+         s.snapchat_url, s.pinterest_url, s.linkedin_url, s.other_social_label, s.other_social_url
+  from public.stores s
+  where s.is_published and s.status = 'active';
+
+revoke all on public.public_stores from anon, authenticated;
+grant select on public.public_stores to anon, authenticated;
+
+-- ============================================================
+-- 20261113000300_showcase_storefront.sql
+-- ============================================================
+-- Vendor-editable text and promotional imagery for the Showcase storefront.
+alter table public.stores
+  add column if not exists hero_eyebrow text,
+  add column if not exists hero_title text,
+  add column if not exists hero_description text,
+  add column if not exists hero_button_text text,
+  add column if not exists category_heading text,
+  add column if not exists products_heading text,
+  add column if not exists promo_one_title text,
+  add column if not exists promo_one_text text,
+  add column if not exists promo_one_image_url text,
+  add column if not exists promo_two_title text,
+  add column if not exists promo_two_text text,
+  add column if not exists promo_two_image_url text,
+  add column if not exists facebook_url text,
+  add column if not exists instagram_url text,
+  add column if not exists tiktok_url text,
+  add column if not exists youtube_url text,
+  add column if not exists x_url text,
+  add column if not exists threads_url text,
+  add column if not exists snapchat_url text,
+  add column if not exists pinterest_url text,
+  add column if not exists linkedin_url text,
+  add column if not exists other_social_label text,
+  add column if not exists other_social_url text;
+
+alter table public.stores drop constraint if exists stores_storefront_layout_check;
+alter table public.stores add constraint stores_storefront_layout_check
+  check (storefront_layout in ('editorial', 'classic', 'minimal', 'showcase'));
+alter table public.stores alter column storefront_layout set default 'showcase';
+update public.stores set storefront_layout = 'showcase' where storefront_layout = 'editorial';
+
+alter table public.stores drop constraint if exists stores_showcase_copy_lengths;
+alter table public.stores add constraint stores_showcase_copy_lengths check (
+  (hero_eyebrow is null or char_length(hero_eyebrow) <= 50) and
+  (hero_title is null or char_length(hero_title) <= 90) and
+  (hero_description is null or char_length(hero_description) <= 200) and
+  (hero_button_text is null or char_length(hero_button_text) <= 32) and
+  (category_heading is null or char_length(category_heading) <= 50) and
+  (products_heading is null or char_length(products_heading) <= 60) and
+  (promo_one_title is null or char_length(promo_one_title) <= 60) and
+  (promo_one_text is null or char_length(promo_one_text) <= 140) and
+  (promo_two_title is null or char_length(promo_two_title) <= 60) and
+  (promo_two_text is null or char_length(promo_two_text) <= 140) and
+  (other_social_label is null or char_length(other_social_label) <= 32)
+);
+
+-- Keep the old public view column order and append the new display settings.
+create or replace view public.public_stores as
+  select s.id, s.slug, s.name, s.tagline, s.description,
+         s.category, public.slugify(s.category) as category_slug,
+         s.city, public.slugify(s.city) as city_slug,
+         s.state, public.slugify(s.state) as state_slug,
+         s.logo_url, s.cover_url, s.og_image_url, s.seo_title, s.seo_description,
+         cardinality(private.store_problems(s)) = 0 as is_indexable,
+         (select count(*) from public.products p where p.store_id = s.id and p.status = 'published')::int as product_count,
+         s.created_at, s.updated_at,
+         greatest(s.updated_at, coalesce((select max(p.updated_at) from public.products p
+                                           where p.store_id = s.id and p.status = 'published'), s.updated_at)) as last_modified,
+         s.contact_phone,
+         s.storefront_layout,
+         s.hero_eyebrow, s.hero_title, s.hero_description, s.hero_button_text, s.category_heading, s.products_heading,
+         s.promo_one_title, s.promo_one_text, s.promo_one_image_url,
+         s.promo_two_title, s.promo_two_text, s.promo_two_image_url,
+         s.facebook_url, s.instagram_url, s.tiktok_url, s.youtube_url, s.x_url, s.threads_url,
+         s.snapchat_url, s.pinterest_url, s.linkedin_url, s.other_social_label, s.other_social_url
+  from public.stores s
+  where s.is_published and s.status = 'active';
+
+revoke all on public.public_stores from anon, authenticated;
+grant select on public.public_stores to anon, authenticated;

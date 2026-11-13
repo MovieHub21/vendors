@@ -946,3 +946,5 @@
   color: var(--tx-718095);
   font-size: 9px;
 }
+.footer-logout { padding: 0; border: 0; background: transparent; color: var(--tx-aab5c4); font: inherit; font-size: 9px; cursor: pointer; }
+.footer-logout:hover { color: var(--tx-ffffff); text-decoration: underline; }

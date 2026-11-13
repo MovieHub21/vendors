@@ -13,7 +13,7 @@ Deno.serve(
       db
         .from("stores")
         .select(
-          "id, slug, name, tagline, description, category, city, state, seo_title, seo_description, seo_keywords, og_image_url, logo_url, cover_url, indexable, contact_phone, contact_email, is_published, status",
+          "id, slug, name, tagline, description, category, city, state, seo_title, seo_description, seo_keywords, og_image_url, logo_url, cover_url, storefront_layout, hero_eyebrow, hero_title, hero_description, hero_button_text, category_heading, products_heading, promo_one_title, promo_one_text, promo_one_image_url, promo_two_title, promo_two_text, promo_two_image_url, facebook_url, instagram_url, tiktok_url, youtube_url, x_url, threads_url, snapchat_url, pinterest_url, linkedin_url, other_social_label, other_social_url, indexable, contact_phone, contact_email, is_published, status",
         )
         .eq("owner_id", user.id)
         .maybeSingle(),

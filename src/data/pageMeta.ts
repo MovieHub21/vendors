@@ -97,11 +97,21 @@ export const PAGE_META = {
     description: "Your SellSharp dashboard: sales today, pending orders, who owes you, low stock and shortcuts to record a sale or share your store.",
     path: "/dashboard",
   },
+  dashboardExport: {
+    title: "Export business data",
+    description: "Download a readable PDF report of your store products, customers, orders, payments and receipts.",
+    path: "/dashboard/export",
+  },
   dashboardSeo: {
     title: "Store SEO settings",
     description:
       "Control how your SellSharp store appears in Google search results and when your link is shared on WhatsApp.",
     path: "/dashboard/seo",
+  },
+  dashboardDesign: {
+    title: "Storefront design",
+    description: "Customize your SellSharp storefront layout, landscape cover image and tagline.",
+    path: "/dashboard/design",
   },
   dashboardSale: {
     title: "Record a sale",
@@ -128,6 +138,11 @@ export const PAGE_META = {
     description: "Preview, print or share a customer receipt from your SellSharp dashboard. Updated receipts keep the original history.",
     path: "/dashboard/receipt",
 
+  },
+  dashboardReceipts: {
+    title: "Receipts",
+    description: "Find, print and share receipts for orders and sales in your SellSharp dashboard.",
+    path: "/dashboard/receipts",
   },
   notFound: {
     title: "Page not found",

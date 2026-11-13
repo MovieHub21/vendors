@@ -6,6 +6,8 @@
     "/favicon.svg",
     "/apple-touch-icon.png",
     "/logo-512.png",
+    "/pwa-icon-192.png",
+    "/manifest.webmanifest",
     "/og-default.png",
     "/robots.txt",
     "/sitemaps/platform.xml"

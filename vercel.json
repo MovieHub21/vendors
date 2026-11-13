@@ -31,16 +31,16 @@
   ],
   "rewrites": [
     {
-      "source": "/sitemap.xml",
-      "destination": "/sitemap.xml"
+      "source": "/dashboard",
+      "destination": "/app-shell"
     },
     {
-      "source": "/robots.txt",
-      "destination": "/robots.txt"
+      "source": "/dashboard/:path*",
+      "destination": "/app-shell"
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/app-shell"
     }
   ]
 }

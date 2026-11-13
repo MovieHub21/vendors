@@ -5,11 +5,7 @@ project_id = "sellsharp"
 # Paystack cannot send a Supabase JWT; this function authenticates the request with Paystack's HMAC signature instead.
 [functions.paystack-webhook]
 verify_jwt = false
-<<<<<<< HEAD
-
 # Customers check out without an account, so the public order endpoint can't require a login.
 # It is safe because it accepts no prices or payment status: the database prices the order and creates it as pending.
 [functions.place-order]
 verify_jwt = false
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c

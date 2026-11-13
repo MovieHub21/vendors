@@ -1,0 +1,28 @@
+.pwa-install-dialog {
+  width: min(440px, calc(100% - 32px));
+  max-height: min(90vh, 720px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  color: var(--color-ink);
+  background: var(--color-page);
+  box-shadow: 0 24px 80px rgb(23 35 55 / 24%);
+}
+.pwa-install-dialog::backdrop { background: rgb(19 29 45 / 52%); backdrop-filter: blur(3px); }
+.pwa-install-content { padding: 30px; }
+.pwa-install-eyebrow { margin: 0 0 10px; color: var(--color-accent); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.pwa-install-content h2 { margin: 0; font: 800 24px / 1.25 var(--font-display); letter-spacing: -.5px; }
+.pwa-install-intro { margin: 10px 0 18px; color: var(--color-muted); font-size: 14px; line-height: 1.55; }
+.pwa-install-benefit { padding: 14px 16px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-band); }
+.pwa-install-benefit strong { font-size: 13px; }
+.pwa-install-benefit p { margin: 4px 0 0; color: var(--color-muted); font-size: 13px; line-height: 1.5; }
+.pwa-ios-steps { margin-top: 20px; font-size: 13px; line-height: 1.6; }
+.pwa-ios-steps p { margin: 0 0 8px; }
+.pwa-ios-steps ol { margin: 0; padding-left: 21px; }
+.pwa-ios-steps li { padding-left: 3px; }
+.pwa-ios-steps li + li { margin-top: 7px; }
+.pwa-install-action { width: 100%; margin-top: 20px; }
+.pwa-install-dismiss { display: block; margin: 14px auto 0; padding: 8px 12px; border: 0; color: var(--color-muted); background: none; font: 600 13px var(--font-body); cursor: pointer; }
+.pwa-install-dismiss:hover { color: var(--color-ink); }
+@media (max-width: 480px) { .pwa-install-content { padding: 24px 22px; } .pwa-install-content h2 { font-size: 21px; } }

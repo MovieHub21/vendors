@@ -65,17 +65,4 @@ create policy "stores: owner reads own" on public.stores
 revoke all on public.stores from anon, authenticated;
 grant select on public.stores to authenticated;
 
-<<<<<<< HEAD
 -- The public read surface (public_stores and friends) is defined in 0500_seo.sql, next to the indexing rules it depends on.
-=======
--- What the public (and the storefront / link-preview function) may see: published, active stores only,
--- and never the owner's id. The view runs with its owner's rights, so anon needs no access to the table itself.
-create or replace view public.public_stores as
-  select id, slug, name, tagline, description, category, city, state,
-         logo_url, cover_url, seo_title, seo_description, created_at, updated_at
-  from public.stores
-  where is_published and status = 'active';
-
-revoke all on public.public_stores from anon, authenticated;
-grant select on public.public_stores to anon, authenticated;
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c

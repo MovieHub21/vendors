@@ -61,6 +61,10 @@
   color: var(--color-ink);
   font: 500 15px var(--font-body);
 }
+.phone-number-control { display: grid; grid-template-columns: minmax(150px, .9fr) minmax(0, 1.1fr); gap: 8px; }
+.phone-number-control select { min-width: 0; padding: 0 9px; font-size: 13px; }
+.phone-number-control input { min-width: 0; }
+.field-invalid .phone-number-control input, .field-invalid .phone-number-control select { border-color: #d64545; }
 .field input::placeholder {
   color: var(--color-muted);
   opacity: 0.7;
@@ -309,4 +313,6 @@
   .field-row {
     grid-template-columns: 1fr;
   }
+  .phone-number-control { grid-template-columns: minmax(128px, .95fr) minmax(0, 1.05fr); gap: 6px; }
+  .phone-number-control select { padding: 0 7px; font-size: 12px; }
 }

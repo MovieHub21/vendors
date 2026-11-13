@@ -10,18 +10,25 @@ export function StoreProducts({ store, products }: { store: VendorStore; product
   return (
     <StoreShell store={store}>
       <Seo seo={buildStoreProductsSeo(store)} />
-      <div className="container sf-products">
+      <div className="container sf-products sf-products-page">
         <nav aria-label="Breadcrumb" className="sf-crumbs">
           <Link to={storePath(store.slug)}>{store.name}</Link> <span aria-hidden="true">/</span> <span>Products</span>
         </nav>
-        <h1 className="sf-h1">All products from {store.name}</h1>
+        <div className="sf-section-heading sf-products-page-heading">
+          <div>
+            <span className="sf-section-eyebrow">Browse the store</span>
+            <h1 className="sf-h1">Products from {store.name}</h1>
+            <p>Find something you’ll love from this collection.</p>
+          </div>
+          <span className="sf-product-count">{products.length} {products.length === 1 ? "item" : "items"}</span>
+        </div>
         {products.length === 0 ? (
           <p className="sf-empty">This store hasn't added products yet.</p>
         ) : (
           <ul className="sf-grid">
             {products.map((p, i) => (
               <li key={p.id}>
-                <ProductCard product={p} index={i} />
+                <ProductCard product={p} index={i} allowCart={!store.isDemo} />
               </li>
             ))}
           </ul>

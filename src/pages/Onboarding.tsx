@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { Alert, AuthLayout } from "../components/AuthLayout";
 import { Field, SelectField } from "../components/Field";
+import { PhoneNumberField, isCompletePhoneNumber } from "../components/PhoneNumberField";
 import { Seo } from "../components/Seo";
 import { NIGERIAN_STATES, STORE_CATEGORIES } from "../data/nigeria";
 import { PAGE_META } from "../data/pageMeta";
@@ -10,7 +11,7 @@ import { formatNaira } from "../lib/money";
 import { slugify, validateStoreSlug } from "../lib/reservedSlugs";
 import { SITE } from "../lib/site";
 
-import { SLUG_MESSAGES, validatePhone, validateStoreName } from "../lib/validation";
+import { SLUG_MESSAGES, validateStoreName } from "../lib/validation";
 
 import { checkSlug, createStore, getMe, startSubscription, type Me } from "../services/api";
 
@@ -93,7 +94,7 @@ function StoreStep({ onCreated }: { onCreated: () => void }) {
       category: category ? null : "Choose a category.",
       state: state ? null : "Choose your state.",
 
-      phone: validatePhone(phone),
+      phone: isCompletePhoneNumber(phone) ? null : "Enter a valid phone number with the country code.",
 
     };
     setErrors(next);
@@ -106,6 +107,7 @@ function StoreStep({ onCreated }: { onCreated: () => void }) {
       category,
       state,
       city: city.trim() || undefined,
+      phone,
     });
     setBusy(false);
     if (result.ok) return onCreated();
@@ -174,14 +176,13 @@ function StoreStep({ onCreated }: { onCreated: () => void }) {
         <Field label="City / area (optional)" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} />
       </div>
 
-      <Field
-        label="WhatsApp / business phone (optional)"
-        type="tel"
-        autoComplete="tel"
+      <PhoneNumberField
+        label="Business WhatsApp number"
         value={phone}
-        onChange={(e) => setPhone(e.target.value)}
+        onChange={setPhone}
+        required
         error={errors.phone}
-        hint="Kept private for now. It is not shown on your public store."
+        hint="Enter the WhatsApp number you use for your business. Choose the country code, then enter the number without its leading 0. Customers will message this number and send orders here."
       />
 
       {formError && <Alert kind="error">{formError}</Alert>}

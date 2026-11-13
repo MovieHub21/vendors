@@ -35,8 +35,8 @@ export function PaymentForm({
 
   return (
     <form className="pay-form" onSubmit={submit}>
-      <h3>Record a payment</h3>
-      <p className="muted">Still owed: {formatNaira(outstandingKobo)}</p>
+      <h3>Record amount received</h3>
+      <p className="muted">Enter what the customer actually paid, including an agreed negotiated amount. Remaining balance: {formatNaira(outstandingKobo)}.</p>
       <div className="field-row">
         <div className="field">
           <label htmlFor={`amt-${orderId}`}>Amount received (₦)</label>
@@ -59,7 +59,7 @@ export function PaymentForm({
       </div>
       {error && <Alert kind="error">{error}</Alert>}
       <button className="btn btn-primary" disabled={busy}>
-        {busy ? "Saving…" : "Save payment"}
+        {busy ? "Saving…" : "Save amount received"}
       </button>
     </form>
   );

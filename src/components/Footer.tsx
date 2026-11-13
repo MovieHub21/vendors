@@ -1,8 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ShoppingBag } from "lucide-react";
 import { SITE } from "../lib/site";
+import { useAuth } from "../auth/useAuth";
+import { signOut } from "../services/auth";
 
 export function Footer() {
+  const { status } = useAuth();
+  const navigate = useNavigate();
   return (
     <footer className="footer">
       <div className="container footer-main">
@@ -44,6 +48,7 @@ export function Footer() {
           © <span suppressHydrationWarning>{new Date().getFullYear()}</span> {SITE.name}. All rights reserved.
         </span>
         <span>Built for the way you sell.</span>
+        {status === "signedIn" && <button type="button" className="footer-logout" onClick={async () => { await signOut(); navigate("/", { replace: true }); }}>Log out</button>}
       </div>
     </footer>
   );

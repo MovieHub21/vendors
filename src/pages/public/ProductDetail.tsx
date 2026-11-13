@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ResponsiveImage } from "../../components/ResponsiveImage";
 import { Seo } from "../../components/Seo";
-import { ProductOrderForm } from "../../components/ProductOrderForm";
+import { AddToCartButton } from "../../components/AddToCartButton";
 import { ShareButton } from "../../components/ShareButton";
 import { StoreShell } from "../../components/StoreShell";
 import { formatNaira } from "../../lib/money";
@@ -59,7 +59,7 @@ export function ProductDetail({
               </ul>
             )}
           </div>
-          <div>
+          <div className="sf-product-info">
             <h1 className="sf-h1">{product.name}</h1>
             <p className="sf-price sf-price-large">{formatNaira(product.priceKobo)}</p>
             <p className={product.isAvailable ? "sf-stock" : "sf-soldout"}>
@@ -76,14 +76,7 @@ export function ProductDetail({
                 Ordering is disabled on demo stores
               </button>
             ) : (
-              <ProductOrderForm
-                storeSlug={store.slug}
-                storeName={store.name}
-                productId={product.id}
-                productName={product.name}
-                priceKobo={product.priceKobo}
-                available={product.isAvailable}
-              />
+              <AddToCartButton storeSlug={store.slug} product={product} />
             )}
             <ShareButton
               path={productPath(store.slug, product.slug)}

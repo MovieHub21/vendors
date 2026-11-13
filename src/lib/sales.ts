@@ -4,6 +4,7 @@
  * These helpers only format values, parse what a vendor types, and build WhatsApp links.
  */
 import { formatNaira } from "./money";
+import { parsePhoneNumberFromString } from "libphonenumber-js/min";
 
 export const CHANNELS = [
   { value: "walk_in", label: "Walk-in" },
@@ -67,18 +68,26 @@ export function previewSale(lines: { quantity: number; unitKobo: number }[], pai
   return { total, paid: paidKobo, outstanding: total - paidKobo };
 }
 
-/** Nigerian numbers: 0803… and +234803… both become 234803… for wa.me links. Null if it doesn't look like a phone number. */
+/** Normalize local or international numbers to the digits WhatsApp expects after wa.me/. */
 export function whatsappNumber(phone: string | null | undefined): string | null {
-  const digits = (phone ?? "").replace(/\D/g, "");
-  if (/^234\d{10}$/.test(digits)) return digits;
-  if (/^0\d{10}$/.test(digits)) return `234${digits.slice(1)}`;
-  return digits.length >= 8 && digits.length <= 15 && !digits.startsWith("0") ? digits : null;
+  const raw = (phone ?? "").trim();
+  if (!raw) return null;
+  const parsed = parsePhoneNumberFromString(raw, raw.startsWith("+") ? undefined : "NG");
+  if (parsed?.isPossible()) return `${parsed.countryCallingCode}${parsed.nationalNumber}`;
+  const digits = raw.replace(/\D/g, "");
+  if (digits && !digits.startsWith("0")) {
+    const international = parsePhoneNumberFromString(`+${digits}`);
+    if (international?.isPossible()) return `${international.countryCallingCode}${international.nationalNumber}`;
+  }
+  return null;
 }
 
 /** https://wa.me/<number>?text=… to message one person, or https://wa.me/?text=… to pick a contact in WhatsApp. */
 export function whatsappLink(message: string, phone?: string | null): string {
   const n = whatsappNumber(phone);
-  return `https://wa.me/${n ?? ""}?text=${encodeURIComponent(message)}`;
+  return n
+    ? `https://wa.me/${n}?text=${encodeURIComponent(message)}`
+    : `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
 
 export const productShareMessage = (name: string, priceKobo: number, url: string) =>

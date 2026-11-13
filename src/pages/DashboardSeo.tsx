@@ -35,6 +35,7 @@ const asPublicStore = (s: OwnStore): VendorStore => ({
   state: s.state ?? undefined,
   logoUrl: s.logo_url ?? undefined,
   coverUrl: s.cover_url ?? undefined,
+  storefrontLayout: s.storefront_layout,
   ogImageUrl: s.og_image_url ?? undefined,
   isIndexable: false,
   productCount: 0,

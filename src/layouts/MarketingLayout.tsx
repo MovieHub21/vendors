@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 
@@ -17,6 +17,8 @@ export function MarketingShell({ children }: { children: ReactNode }) {
 }
 
 export default function MarketingLayout() {
+  const { pathname } = useLocation();
+  if (pathname.startsWith("/dashboard")) return <Outlet />;
   return (
     <MarketingShell>
       <Outlet />

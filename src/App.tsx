@@ -9,6 +9,8 @@ import Contact from "./pages/Contact";
 import Customers from "./pages/Customers";
 import Dashboard from "./pages/Dashboard";
 import DashboardSeo from "./pages/DashboardSeo";
+import BusinessExport from "./pages/BusinessExport";
+import StoreDesign from "./pages/StoreDesign";
 
 import Faq from "./pages/Faq";
 import Features from "./pages/Features";
@@ -23,11 +25,13 @@ import Orders from "./pages/Orders";
 import PaymentResult from "./pages/PaymentResult";
 import Products from "./pages/Products";
 import ReceiptPage from "./pages/ReceiptPage";
+import Receipts from "./pages/Receipts";
 import RecordSale from "./pages/RecordSale";
 import Pricing from "./pages/Pricing";
 import PublicPage from "./pages/public/PublicPage";
 import ResetPassword from "./pages/ResetPassword";
 import Signup from "./pages/Signup";
+import { CartProvider } from "./storefront/CartContext";
 
 
 /**
@@ -37,6 +41,7 @@ import Signup from "./pages/Signup";
 export default function App() {
   return (
     <ThemeProvider>
+      <CartProvider>
       <Routes>
         <Route element={<MarketingLayout />}>
           <Route path="/" element={<Home />} />
@@ -87,6 +92,14 @@ export default function App() {
             }
           />
           <Route
+            path="/dashboard/design"
+            element={
+              <RequireAuth>
+                <StoreDesign />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="/dashboard/sale"
             element={
               <RequireAuth>
@@ -119,6 +132,22 @@ export default function App() {
             }
           />
           <Route
+            path="/dashboard/receipts"
+            element={
+              <RequireAuth>
+                <Receipts />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard/export"
+            element={
+              <RequireAuth>
+                <BusinessExport />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="/dashboard/receipt/:orderId"
             element={
               <RequireAuth>
@@ -142,6 +171,7 @@ export default function App() {
         <Route path="/:storeSlug/products/:productSlug" element={<PublicPage />} />
 
       </Routes>
+      </CartProvider>
     </ThemeProvider>
   );
 }

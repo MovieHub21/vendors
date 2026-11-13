@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { MessageCircle, Printer } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { Alert } from "../components/AuthLayout";
 import { DashboardShell, dateTime } from "../components/DashboardShell";
 import { PAGE_META } from "../data/pageMeta";
 import { formatNaira } from "../lib/money";
-import { channelLabel, methodLabel, PAYMENT_STATUS_LABEL, receiptText, whatsappLink } from "../lib/sales";
+import { channelLabel, methodLabel, PAYMENT_STATUS_LABEL, whatsappLink } from "../lib/sales";
+import { createReceiptPdf } from "../lib/receiptPdf";
 import { getReceipt, type Receipt } from "../services/sales";
 
 function ReceiptView({ orderId }: { orderId: string }) {
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [shareFallback, setShareFallback] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     void getReceipt(orderId).then((r) => {
@@ -27,19 +29,58 @@ function ReceiptView({ orderId }: { orderId: string }) {
   if (!receipt) return <p className="auth-loading">Preparing receipt…</p>;
   const s = receipt.snapshot;
   const place = [s.business.city, s.business.state].filter(Boolean).join(", ");
+  const filename = `receipt-${receipt.receipt_no}${receipt.revision > 1 ? `-v${receipt.revision}` : ""}.pdf`;
+  const downloadPdf = (blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+  };
+  const saveAsPdf = () => {
+    downloadPdf(createReceiptPdf(s, receipt.receipt_no, receipt.revision));
+  };
+  const sharePdf = async () => {
+    const blob = createReceiptPdf(s, receipt.receipt_no, receipt.revision);
+    const file = new File([blob], filename, { type: "application/pdf" });
+    const shareApi = navigator as Navigator & {
+      canShare?: (data?: ShareData) => boolean;
+      share?: (data?: ShareData) => Promise<void>;
+    };
+    if (shareApi.share && shareApi.canShare?.({ files: [file] })) {
+      try {
+        await shareApi.share({ files: [file], title: `Receipt ${receipt.receipt_no}`, text: `Receipt from ${s.business.name}` });
+        setShareFallback(null);
+      } catch (shareError) {
+        if (shareError instanceof DOMException && shareError.name === "AbortError") return;
+        downloadPdf(blob);
+        setShareFallback(whatsappLink(`Hi ${s.customer.name}, here is your receipt PDF for order ${s.order.reference}.`, s.customer.phone));
+      }
+      return;
+    }
+    downloadPdf(blob);
+    setShareFallback(whatsappLink(`Hi ${s.customer.name}, here is your receipt PDF for order ${s.order.reference}.`, s.customer.phone));
+  };
 
   return (
     <>
-      <div className="quick-actions no-print">
-        <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16} aria-hidden="true" /> Print or save as PDF</button>
-        <a className="btn btn-outline" target="_blank" rel="noopener noreferrer" href={whatsappLink(receiptText(receipt.receipt_no, receipt.revision, s), s.customer.phone)}>
-          <MessageCircle size={16} aria-hidden="true" /> Share on WhatsApp
-        </a>
+      <div className="receipt-actions no-print">
+        <button className="btn btn-primary" onClick={saveAsPdf}>Save as PDF</button>
+        <button className="btn btn-outline" onClick={() => void sharePdf()}>
+          <MessageCircle size={16} aria-hidden="true" /> Share PDF on WhatsApp
+        </button>
         <Link className="btn btn-outline" to={`/dashboard/orders?o=${orderId}`}>Back to order</Link>
       </div>
+      {shareFallback && (
+        <p className="receipt-share-fallback no-print" role="status">
+          The PDF is saved to your device. Open WhatsApp and attach <b>{filename}</b> to send it.
+          <a href={shareFallback} target="_blank" rel="noopener noreferrer"> Open WhatsApp</a>
+        </p>
+      )}
       {receipt.revision > 1 && <p className="muted no-print">This is an updated receipt (version {receipt.revision}) reflecting payments recorded since the first one. Earlier versions are kept.</p>}
-      <article className="receipt" aria-label={`Receipt ${receipt.receipt_no}`}>
-        <header>
+      <article className="receipt receipt-document" aria-label={`Receipt ${receipt.receipt_no}`}>
+        <header className="receipt-header">
           {s.business.logo_url && <img src={s.business.logo_url} alt="" width={56} height={56} />}
           <div>
             <h2>{s.business.name}</h2>
@@ -55,7 +96,7 @@ function ReceiptView({ orderId }: { orderId: string }) {
           <div><small>Customer</small><b>{s.customer.name}</b><span>{[s.customer.phone, s.customer.email, s.customer.address].filter(Boolean).join(" · ")}</span></div>
           <div><small>Order</small><b>{s.order.reference}</b><span>{channelLabel(s.order.channel)}</span></div>
         </section>
-        <table className="dash-table">
+        <table className="dash-table receipt-table">
           <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead>
           <tbody>
             {s.items.map((i, n) => (
@@ -68,7 +109,7 @@ function ReceiptView({ orderId }: { orderId: string }) {
             <tr><td colSpan={3}>Outstanding balance</td><td><b>{formatNaira(s.totals.outstanding_kobo)}</b></td></tr>
           </tfoot>
         </table>
-        <section>
+        <section className="receipt-payment-section">
           <small>Payments ({PAYMENT_STATUS_LABEL[s.totals.payment_status]})</small>
           {s.payments.length === 0 ? <p>No payment received yet.</p> : (
             <ul>
@@ -78,7 +119,7 @@ function ReceiptView({ orderId }: { orderId: string }) {
             </ul>
           )}
         </section>
-        <footer>Thank you for your purchase.</footer>
+        <footer className="receipt-thanks">Thank you for your purchase.</footer>
       </article>
     </>
   );

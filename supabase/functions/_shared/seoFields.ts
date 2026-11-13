@@ -59,6 +59,31 @@ export interface StoreSeoUpdate {
   description?: string;
   contact_phone?: string | null;
   contact_email?: string | null;
+  cover_url?: string | null;
+  storefront_layout?: "editorial" | "classic" | "minimal" | "showcase";
+  hero_eyebrow?: string | null;
+  hero_title?: string | null;
+  hero_description?: string | null;
+  hero_button_text?: string | null;
+  category_heading?: string | null;
+  products_heading?: string | null;
+  promo_one_title?: string | null;
+  promo_one_text?: string | null;
+  promo_one_image_url?: string | null;
+  promo_two_title?: string | null;
+  promo_two_text?: string | null;
+  promo_two_image_url?: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  tiktok_url?: string | null;
+  youtube_url?: string | null;
+  x_url?: string | null;
+  threads_url?: string | null;
+  snapchat_url?: string | null;
+  pinterest_url?: string | null;
+  linkedin_url?: string | null;
+  other_social_label?: string | null;
+  other_social_url?: string | null;
 }
 
 export function cleanPhone(value: unknown, field = "phone"): string | null {
@@ -76,6 +101,31 @@ export function parseStoreSeoUpdate(body: Record<string, unknown>): StoreSeoUpda
   if (has("seo_description")) out.seo_description = cleanText(body.seo_description, "SEO description", 160);
   if (has("seo_keywords")) out.seo_keywords = cleanText(body.seo_keywords, "Keywords", 200);
   if (has("og_image_url")) out.og_image_url = cleanHttpsUrl(body.og_image_url, "Social sharing image");
+  if (has("cover_url")) out.cover_url = cleanHttpsUrl(body.cover_url, "Store banner");
+  if (has("storefront_layout")) {
+    const layout = body.storefront_layout;
+    if (layout !== "editorial" && layout !== "classic" && layout !== "minimal" && layout !== "showcase") {
+      throw new HttpError(422, "invalid_input", "Choose a supported storefront layout");
+    }
+    out.storefront_layout = layout;
+  }
+  if (has("hero_eyebrow")) out.hero_eyebrow = cleanText(body.hero_eyebrow, "Hero eyebrow", 50);
+  if (has("hero_title")) out.hero_title = cleanText(body.hero_title, "Hero title", 90);
+  if (has("hero_description")) out.hero_description = cleanText(body.hero_description, "Hero description", 200);
+  if (has("hero_button_text")) out.hero_button_text = cleanText(body.hero_button_text, "Hero button text", 32);
+  if (has("category_heading")) out.category_heading = cleanText(body.category_heading, "Category heading", 50);
+  if (has("products_heading")) out.products_heading = cleanText(body.products_heading, "Products heading", 60);
+  if (has("promo_one_title")) out.promo_one_title = cleanText(body.promo_one_title, "First promotion title", 60);
+  if (has("promo_one_text")) out.promo_one_text = cleanText(body.promo_one_text, "First promotion text", 140);
+  if (has("promo_one_image_url")) out.promo_one_image_url = cleanHttpsUrl(body.promo_one_image_url, "First promotion image");
+  if (has("promo_two_title")) out.promo_two_title = cleanText(body.promo_two_title, "Second promotion title", 60);
+  if (has("promo_two_text")) out.promo_two_text = cleanText(body.promo_two_text, "Second promotion text", 140);
+  if (has("promo_two_image_url")) out.promo_two_image_url = cleanHttpsUrl(body.promo_two_image_url, "Second promotion image");
+  for (const field of ["facebook_url", "instagram_url", "tiktok_url", "youtube_url", "x_url", "threads_url", "snapchat_url", "pinterest_url", "linkedin_url"] as const) {
+    if (has(field)) out[field] = cleanHttpsUrl(body[field], field.replace(/_url$/, " link"));
+  }
+  if (has("other_social_label")) out.other_social_label = cleanText(body.other_social_label, "Other social link label", 32);
+  if (has("other_social_url")) out.other_social_url = cleanHttpsUrl(body.other_social_url, "Other social link");
   if (has("tagline")) out.tagline = cleanText(body.tagline, "Tagline", 100);
   if (has("city")) out.city = cleanText(body.city, "City", 60, 2);
   if (has("state")) out.state = cleanText(body.state, "State", 40, 2);

@@ -1,4 +1,4 @@
-/** Public shapes: exactly what the public views return. Nothing private (owner, phone, email, stock) lives here. */
+/** Public shapes from the read-only storefront views. Contact phone is public by vendor choice for WhatsApp enquiries. */
 export interface VendorStore {
   id: string;
   slug: string;
@@ -13,6 +13,31 @@ export interface VendorStore {
   stateSlug?: string;
   logoUrl?: string;
   coverUrl?: string;
+  contactPhone?: string;
+  storefrontLayout?: "editorial" | "classic" | "minimal" | "showcase";
+  heroEyebrow?: string;
+  heroTitle?: string;
+  heroDescription?: string;
+  heroButtonText?: string;
+  categoryHeading?: string;
+  productsHeading?: string;
+  promoOneTitle?: string;
+  promoOneText?: string;
+  promoOneImageUrl?: string;
+  promoTwoTitle?: string;
+  promoTwoText?: string;
+  promoTwoImageUrl?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  youtubeUrl?: string;
+  xUrl?: string;
+  threadsUrl?: string;
+  snapchatUrl?: string;
+  pinterestUrl?: string;
+  linkedinUrl?: string;
+  otherSocialLabel?: string;
+  otherSocialUrl?: string;
   ogImageUrl?: string;
   seoTitle?: string;
   seoDescription?: string;

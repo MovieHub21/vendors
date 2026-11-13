@@ -9,13 +9,15 @@ export function StoreAbout({ store }: { store: VendorStore }) {
   return (
     <StoreShell store={store}>
       <Seo seo={buildStoreAboutSeo(store)} />
-      <div className="container sf-product">
+      <div className="container sf-product sf-about-page">
         <nav aria-label="Breadcrumb" className="sf-crumbs">
           <Link to={storePath(store.slug)}>{store.name}</Link> <span aria-hidden="true">/</span> <span>About</span>
         </nav>
-        <h1 className="sf-h1">About {store.name}</h1>
-        <p>{store.description}</p>
-        <p>
+        <article className="sf-about-card">
+          <span className="sf-section-eyebrow">About the store</span>
+          <h1 className="sf-h1">{store.name}</h1>
+          <p className="sf-about-description">{store.description}</p>
+          <p className="sf-about-facts">
           Category: <Link to={directoryPath(store.categorySlug)}>{store.category}</Link>
           {store.state && store.stateSlug && (
             <>
@@ -23,10 +25,9 @@ export function StoreAbout({ store }: { store: VendorStore }) {
               <Link to={directoryPath(store.stateSlug)}>{[store.city, store.state].filter(Boolean).join(", ")}</Link>
             </>
           )}
-        </p>
-        <p>
-          <Link to={storeProductsPath(store.slug)}>Browse all products</Link>
-        </p>
+          </p>
+          <Link className="btn btn-primary" to={storeProductsPath(store.slug)}>Browse the collection</Link>
+        </article>
       </div>
     </StoreShell>
   );
