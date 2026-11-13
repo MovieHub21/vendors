@@ -9,16 +9,15 @@ import type { Product, VendorStore } from "../types/store";
 export function getStoreBySlug(slug: string): VendorStore | null {
   const key = slug.toLowerCase();
   if (isReservedSlug(key)) return null;
-  const store = MOCK_STORES.find((s) => s.slug === key);
-  return store && store.isPublished && store.status === "active" ? store : null;
+  return MOCK_STORES.find((s) => s.slug === key) ?? null;
 }
 
-export function getProductsForStore(storeId: string): Product[] {
-  return MOCK_PRODUCTS.filter((x) => x.storeId === storeId);
+export function getProductsForStore(storeSlug: string): Product[] {
+  return MOCK_PRODUCTS.filter((x) => x.storeSlug === storeSlug);
 }
 
 export function getProduct(storeSlug: string, productSlug: string): { store: VendorStore; product: Product } | null {
   const store = getStoreBySlug(storeSlug);
-  const product = store ? getProductsForStore(store.id).find((x) => x.slug === productSlug.toLowerCase()) : undefined;
+  const product = store ? getProductsForStore(store.slug).find((x) => x.slug === productSlug.toLowerCase()) : undefined;
   return store && product ? { store, product } : null;
 }

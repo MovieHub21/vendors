@@ -12,7 +12,7 @@ import "./styles/marketing.css";
 import "./styles/pages.css";
 import "./styles/storefront.css";
 import "./styles/auth.css";
-<<<<<<< HEAD
+
 import "./styles/dashboard.css";
 import "./styles/responsive.css";
 import "./styles/utilities.css";
@@ -31,19 +31,7 @@ const app = (
           <App />
         </BrowserRouter>
       </PreloadedPageContext.Provider>
-=======
-import "./styles/responsive.css";
-import "./styles/utilities.css";
-import App from "./App";
 
-const root = document.getElementById("root")!;
-const app = (
-  <StrictMode>
-    <HelmetProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     </HelmetProvider>
   </StrictMode>
 );

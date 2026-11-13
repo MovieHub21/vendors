@@ -20,7 +20,7 @@ export default function Storefront() {
     );
   }
 
-  const products = getProductsForStore(store.id);
+  const products = getProductsForStore(store.slug);
   const place = [store.city, store.state].filter(Boolean).join(", ");
 
   return (

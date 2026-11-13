@@ -1,17 +1,10 @@
 import type { Product, VendorStore } from "../types/store";
 import { koboToDecimalString } from "./money";
-<<<<<<< HEAD
 import { directoryPath, productPath, storeAboutPath, storePath, storeProductsPath } from "./routes";
 import { SITE, absoluteUrl } from "./site";
 
 export type JsonLd = Record<string, unknown>;
 export type ImageKind = "product" | "cover" | "logo" | "default";
-=======
-import { productPath, storePath } from "./routes";
-import { SITE, absoluteUrl } from "./site";
-
-export type JsonLd = Record<string, unknown>;
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 
 export interface PageSeo {
   /** Text before the brand suffix, or the whole title when `absoluteTitle` is true. */
@@ -20,7 +13,6 @@ export interface PageSeo {
   path: string;
   absoluteTitle?: boolean;
   noindex?: boolean;
-<<<<<<< HEAD
   /** noindex pages normally still let crawlers follow links; set for pages that should not be followed at all. */
   nofollow?: boolean;
   image?: string;
@@ -33,11 +25,6 @@ export interface PageSeo {
   ogDescription?: string;
   type?: "website" | "article" | "product";
   price?: { amountKobo: number; available: boolean };
-=======
-  image?: string;
-  imageAlt?: string;
-  type?: "website" | "article" | "product";
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   jsonLd?: JsonLd[];
 }
 
@@ -65,7 +52,6 @@ export function fullTitle(seo: Pick<PageSeo, "title" | "absoluteTitle">): string
   return seo.absoluteTitle ? seo.title : `${seo.title} | ${SITE.name}`;
 }
 
-<<<<<<< HEAD
 export const robotsContent = (seo: Pick<PageSeo, "noindex" | "nofollow">): string =>
   seo.noindex ? (seo.nofollow ? "noindex, nofollow" : "noindex, follow") : "index, follow, max-image-preview:large";
 
@@ -122,8 +108,6 @@ export function pickSocialImage(
   };
 }
 
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 /* ---------- site-level structured data ---------- */
 
 export const organizationJsonLd = (): JsonLd => ({
@@ -184,7 +168,6 @@ export const breadcrumbJsonLd = (crumbs: ReadonlyArray<{ name: string; path: str
   })),
 });
 
-<<<<<<< HEAD
 /* ---------- generated defaults (vendors can override them in Settings → Store SEO) ---------- */
 
 const titleCase = (s: string) => s.replace(/\b([a-z])/g, (m) => m.toUpperCase());
@@ -245,48 +228,16 @@ function storeJsonLd(store: VendorStore, products: Product[]): JsonLd {
   return {
     "@context": "https://schema.org",
     // OnlineStore, not LocalBusiness: we cannot verify a physical shop, so we never publish an address.
-=======
-/* ---------- per-vendor SEO ---------- */
-
-export const isStoreIndexable = (store: VendorStore): boolean =>
-  store.isPublished && store.status === "active" && !store.isDemo;
-
-const storeLocation = (s: VendorStore) => [s.city, s.state].filter(Boolean).join(", ");
-
-export function storeJsonLd(store: VendorStore, products: Product[]): JsonLd {
-  const url = absoluteUrl(storePath(store.slug));
-  const location = storeLocation(store);
-  return {
-    "@context": "https://schema.org",
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     "@type": "OnlineStore",
     "@id": `${url}#store`,
     name: store.name,
     url,
     description: store.description,
-<<<<<<< HEAD
     ...(store.logoUrl && isPublicImageUrl(store.logoUrl) ? { logo: absoluteUrl(store.logoUrl) } : {}),
     ...(image.imageKind !== "default" ? { image: image.image } : {}),
     areaServed: store.city
       ? { "@type": "City", name: store.city, containedInPlace: { "@type": "Country", name: "Nigeria" } }
       : { "@type": "Country", name: "Nigeria" },
-=======
-    ...(store.logoUrl ? { logo: absoluteUrl(store.logoUrl) } : {}),
-    ...(store.coverUrl ? { image: absoluteUrl(store.coverUrl) } : {}),
-    areaServed: store.city
-      ? { "@type": "City", name: store.city, address: { "@type": "PostalAddress", addressCountry: SITE.country } }
-      : { "@type": "Country", name: "Nigeria" },
-    ...(location
-      ? {
-          address: {
-            "@type": "PostalAddress",
-            addressLocality: store.city,
-            ...(store.state ? { addressRegion: store.state } : {}),
-            addressCountry: SITE.country,
-          },
-        }
-      : {}),
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     hasOfferCatalog: {
       "@type": "OfferCatalog",
       name: `${store.name} products`,
@@ -302,10 +253,7 @@ export function storeJsonLd(store: VendorStore, products: Product[]): JsonLd {
 
 export function productJsonLd(store: VendorStore, product: Product): JsonLd {
   const url = absoluteUrl(productPath(store.slug, product.slug));
-<<<<<<< HEAD
   const images = product.images.filter((i) => isPublicImageUrl(i.url)).map((i) => absoluteUrl(i.url));
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -314,14 +262,9 @@ export function productJsonLd(store: VendorStore, product: Product): JsonLd {
     description: product.description,
     sku: product.id,
     url,
-<<<<<<< HEAD
     ...(images.length ? { image: images } : {}),
     brand: { "@type": "Brand", name: store.name },
     // Only real, visible data. No ratings or reviews are ever generated.
-=======
-    ...(product.imageUrls.length ? { image: product.imageUrls.map((u) => absoluteUrl(u)) } : {}),
-    brand: { "@type": "Brand", name: store.name },
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     offers: {
       "@type": "Offer",
       url,
@@ -333,7 +276,6 @@ export function productJsonLd(store: VendorStore, product: Product): JsonLd {
   };
 }
 
-<<<<<<< HEAD
 export function buildStoreSeo(store: VendorStore, products: Product[]): PageSeo {
   const seo = effectiveStoreSeo(store);
   const img = pickSocialImage([
@@ -383,31 +325,11 @@ export function buildStoreProductsSeo(store: VendorStore): PageSeo {
         { name: SITE.name, path: "/" },
         { name: store.name, path: storePath(store.slug) },
         { name: "Products", path: storeProductsPath(store.slug) },
-=======
-/** Pure functions so the same code can later run inside an edge function that injects tags for WhatsApp/Facebook crawlers. */
-export function buildStoreSeo(store: VendorStore, products: Product[]): PageSeo {
-  const location = store.city ? ` in ${store.city}` : "";
-  const fallbackTitle = `${store.name} — ${store.tagline ?? `${store.category}${location}`}`;
-  return {
-    title: truncate(store.seoTitle ?? fallbackTitle, 60),
-    absoluteTitle: true,
-    description: truncate(store.seoDescription ?? store.description, 155),
-    path: storePath(store.slug),
-    noindex: !isStoreIndexable(store),
-    image: store.coverUrl ?? store.logoUrl,
-    imageAlt: `${store.name} online store`,
-    jsonLd: [
-      storeJsonLd(store, products),
-      breadcrumbJsonLd([
-        { name: SITE.name, path: "/" },
-        { name: store.name, path: storePath(store.slug) },
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
       ]),
     ],
   };
 }
 
-<<<<<<< HEAD
 /** Thin by nature, so it stays out of search results (but links are still followed). */
 export function buildStoreAboutSeo(store: VendorStore): PageSeo {
   return {
@@ -452,18 +374,6 @@ export function buildProductSeo(store: VendorStore, product: Product): PageSeo {
           : `View product details and order from ${store.name}.`),
       200,
     ),
-=======
-export function buildProductSeo(store: VendorStore, product: Product): PageSeo {
-  return {
-    title: truncate(`${product.name} — ${store.name}`, 60),
-    absoluteTitle: true,
-    description: truncate(product.description, 155),
-    path: productPath(store.slug, product.slug),
-    noindex: !isStoreIndexable(store),
-    image: product.imageUrls[0] ?? store.coverUrl ?? store.logoUrl,
-    imageAlt: product.name,
-    type: "product",
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     jsonLd: [
       productJsonLd(store, product),
       breadcrumbJsonLd([
@@ -474,7 +384,6 @@ export function buildProductSeo(store: VendorStore, product: Product): PageSeo {
     ],
   };
 }
-<<<<<<< HEAD
 
 /* ---------- directory SEO ---------- */
 
@@ -511,5 +420,3 @@ export function buildDirectorySeo(opts: {
     ],
   };
 }
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c

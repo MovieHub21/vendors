@@ -40,7 +40,6 @@ describe("prerendered HTML hydrates cleanly", () => {
     container.remove();
   });
 });
-<<<<<<< HEAD
 
 describe("server-rendered vendor pages hydrate cleanly (the browser adopts the HTML the crawler saw)", () => {
   it.each(["/ama-hairs", "/ama-hairs/products/body-wave-wig", "/stores"])("%s", async (path) => {
@@ -115,5 +114,3 @@ describe("server-rendered vendor pages hydrate cleanly (the browser adopts the H
     container.remove();
   });
 });
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c

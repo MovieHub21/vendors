@@ -24,10 +24,9 @@ export function Footer() {
           <Link to="/features">Features</Link>
           <Link to="/pricing">Pricing</Link>
           <Link to="/faq">FAQs</Link>
-<<<<<<< HEAD
+
           <Link to="/stores">Browse stores</Link>
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
         </div>
         <div className="footer-col">
           <b>Company</b>

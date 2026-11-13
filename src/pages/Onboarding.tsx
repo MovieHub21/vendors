@@ -9,11 +9,9 @@ import { PAGE_META } from "../data/pageMeta";
 import { formatNaira } from "../lib/money";
 import { slugify, validateStoreSlug } from "../lib/reservedSlugs";
 import { SITE } from "../lib/site";
-<<<<<<< HEAD
+
 import { SLUG_MESSAGES, validatePhone, validateStoreName } from "../lib/validation";
-=======
-import { SLUG_MESSAGES, validateStoreName } from "../lib/validation";
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
 import { checkSlug, createStore, getMe, startSubscription, type Me } from "../services/api";
 
 function Steps({ current }: { current: 1 | 2 }) {
@@ -41,10 +39,9 @@ function StoreStep({ onCreated }: { onCreated: () => void }) {
   const [category, setCategory] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
-<<<<<<< HEAD
+
   const [phone, setPhone] = useState("");
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -95,10 +92,9 @@ function StoreStep({ onCreated }: { onCreated: () => void }) {
       slug: !slug ? "Choose a store username." : slugMessage,
       category: category ? null : "Choose a category.",
       state: state ? null : "Choose your state.",
-<<<<<<< HEAD
+
       phone: validatePhone(phone),
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
     };
     setErrors(next);
     setFormError(null);
@@ -177,7 +173,7 @@ function StoreStep({ onCreated }: { onCreated: () => void }) {
         </SelectField>
         <Field label="City / area (optional)" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} />
       </div>
-<<<<<<< HEAD
+
       <Field
         label="WhatsApp / business phone (optional)"
         type="tel"
@@ -187,8 +183,7 @@ function StoreStep({ onCreated }: { onCreated: () => void }) {
         error={errors.phone}
         hint="Kept private for now. It is not shown on your public store."
       />
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
       {formError && <Alert kind="error">{formError}</Alert>}
       <button className="btn btn-primary btn-full" type="submit" disabled={busy}>
         {busy ? "Creating your store…" : "Continue"} <ArrowRight size={16} />
@@ -265,11 +260,9 @@ export default function Onboarding() {
     };
   }, [reload]);
 
-<<<<<<< HEAD
+
   if (me?.next_step === "done") return <Navigate to="/dashboard" replace />;
-=======
-  if (me?.next_step === "done") return <Navigate to="/app" replace />;
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
 
   const step = me?.next_step === "subscribe" ? 2 : 1;
   return (

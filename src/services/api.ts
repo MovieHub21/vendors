@@ -13,7 +13,6 @@ export interface StoreSummary {
   is_published: boolean;
   status: "active" | "suspended";
 }
-<<<<<<< HEAD
 /** The vendor's own store, including private fields. Only ever returned to its owner. */
 export interface OwnStore {
   id: string;
@@ -58,8 +57,7 @@ export interface StoreSeoInput {
   tagline?: string;
   description?: string;
 }
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
 export interface SubscriptionSummary {
   plan_code: string;
   status: string;
@@ -70,14 +68,11 @@ export type NextStep = "create_store" | "subscribe" | "done";
 export interface Me {
   user: { id: string; email: string | null };
   profile: { full_name: string; phone: string | null } | null;
-<<<<<<< HEAD
+
   store: OwnStore | null;
   subscription: SubscriptionSummary | null;
   seo_status: SeoStatus | null;
-=======
-  store: StoreSummary | null;
-  subscription: SubscriptionSummary | null;
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
   next_step: NextStep;
 }
 export interface StoreInput {
@@ -86,10 +81,9 @@ export interface StoreInput {
   category: string;
   city?: string;
   state?: string;
-<<<<<<< HEAD
+
   phone?: string;
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
 }
 export type PaymentStatus = "success" | "pending" | "failed";
 
@@ -102,7 +96,7 @@ const MESSAGES: Record<string, string> = {
   payment_not_found: "We couldn't find that payment.",
   payment_mismatch: "That payment didn't match your plan. Please contact support.",
   invalid_input: "Please check the details you entered.",
-<<<<<<< HEAD
+
   nothing_to_update: "There were no changes to save.",
   body_too_large: "That request was too large.",
   subscription_required: "Your subscription has ended, so you can view your records but not change them. Renew to continue.",
@@ -125,12 +119,7 @@ const MESSAGES: Record<string, string> = {
 };
 
 export async function call<T>(name: string, body?: Record<string, unknown>): Promise<Result<T>> {
-=======
-  body_too_large: "That request was too large.",
-};
 
-async function call<T>(name: string, body?: Record<string, unknown>): Promise<Result<T>> {
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   if (!supabase) return fail("not_configured", "The service isn't connected yet. Please try again later.");
   const { data, error } = await supabase.functions.invoke<T>(name, { body });
   if (!error) return ok(data as T);
@@ -160,10 +149,9 @@ export const checkSlug = (slug: string) =>
 export const createStore = (input: StoreInput) => call<{ store: StoreSummary }>("create-store", { ...input });
 export const startSubscription = () =>
   call<{ authorization_url: string; reference: string }>("subscription-initialize", {});
-<<<<<<< HEAD
+
 export const updateStoreSeo = (input: StoreSeoInput) =>
   call<{ store: OwnStore; seo_status: SeoStatus }>("update-store-seo", { ...input });
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
 export const verifyPayment = (reference: string) =>
   call<{ status: PaymentStatus }>("subscription-verify", { reference });

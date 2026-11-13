@@ -56,7 +56,7 @@ const FUTURE_AND_SYSTEM = [
   "paystack",
   "null",
   "undefined",
-<<<<<<< HEAD
+
   "sitemaps",
   "search",
   "category",
@@ -66,8 +66,7 @@ const FUTURE_AND_SYSTEM = [
   "directory",
   "ssr-template",
   "app-shell",
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
 ];
 
 const fromRoutes = ALL_STATIC_ROUTES.map((r) => r.split("/")[1]).filter(Boolean);

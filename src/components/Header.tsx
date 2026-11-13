@@ -30,22 +30,19 @@ export function Header() {
           <NavLink to="/faq" onClick={close}>
             FAQs
           </NavLink>
-<<<<<<< HEAD
+
           <NavLink to="/stores" onClick={close}>
             Stores
           </NavLink>
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
           <NavLink to="/contact" onClick={close}>
             Contact
           </NavLink>
           <div className="mobile-nav-actions">
             {signedIn ? (
-<<<<<<< HEAD
+
               <Link className="btn btn-primary" to="/dashboard" onClick={close}>
-=======
-              <Link className="btn btn-primary" to="/app" onClick={close}>
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
                 Go to dashboard <ArrowRight size={16} />
               </Link>
             ) : (
@@ -62,11 +59,10 @@ export function Header() {
         </nav>
         <div className="nav-actions">
           {signedIn ? (
-<<<<<<< HEAD
+
             <Link className="btn btn-primary nav-cta" to="/dashboard">
-=======
-            <Link className="btn btn-primary nav-cta" to="/app">
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
+
+
               Dashboard <ArrowUpRight size={16} />
             </Link>
           ) : (

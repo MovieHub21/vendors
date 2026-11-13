@@ -38,7 +38,6 @@ const me = (over: Partial<api.Me> = {}): api.Me => ({
   profile: { full_name: "Ama Okafor", phone: null },
   store: null,
   subscription: null,
-<<<<<<< HEAD
   seo_status: null,
   next_step: "create_store",
   ...over,
@@ -63,20 +62,6 @@ const store: api.OwnStore = {
   contact_email: null,
   is_published: false,
   status: "active",
-=======
-  next_step: "create_store",
-  ...over,
-});
-const store = {
-  id: "s1",
-  slug: "ama-hairs",
-  name: "Ama Hair Studio",
-  category: "Hair & wigs",
-  city: "Lagos",
-  state: "Lagos",
-  is_published: false,
-  status: "active" as const,
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 };
 
 beforeEach(() => {
@@ -86,11 +71,7 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe("route guard", () => {
-<<<<<<< HEAD
   it.each(["/dashboard", "/onboarding", "/onboarding/payment"])(
-=======
-  it.each(["/app", "/onboarding", "/onboarding/payment"])(
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     "sends signed-out visitors from %s to login, remembering where they were going",
     (path) => {
       renderAt(path);
@@ -100,15 +81,9 @@ describe("route guard", () => {
 
   it("waits while the session is still loading instead of bouncing the vendor to login", () => {
     __setAuthStateForTests(null);
-<<<<<<< HEAD
     renderAt("/dashboard");
     expect(screen.getByRole("status")).toHaveTextContent(/Loading/);
     expect(where()).toBe("/dashboard");
-=======
-    renderAt("/app");
-    expect(screen.getByRole("status")).toHaveTextContent(/Loading/);
-    expect(where()).toBe("/app");
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   });
 });
 
@@ -139,11 +114,7 @@ describe("login", () => {
     type("Email", "ama@example.com");
     type("Password", "sellsharp2026");
     fireEvent.click(screen.getByRole("button", { name: /Log in/ }));
-<<<<<<< HEAD
     await waitFor(() => expect(where()).toBe("/dashboard"));
-=======
-    await waitFor(() => expect(where()).toBe("/app"));
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     expect(auth.signIn).toHaveBeenCalledWith("ama@example.com", "sellsharp2026");
   });
 
@@ -298,10 +269,7 @@ describe("onboarding: store setup", () => {
       category: "Hair & wigs",
       state: "Lagos",
       city: undefined,
-<<<<<<< HEAD
       phone: undefined,
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     });
   });
 
@@ -335,11 +303,7 @@ describe("onboarding: subscription and payment", () => {
   it("skips onboarding for vendors who are already set up", async () => {
     backend.getMe.mockResolvedValue({ ok: true, data: me({ store, next_step: "done" }) });
     renderAt("/onboarding");
-<<<<<<< HEAD
     await waitFor(() => expect(where()).toBe("/dashboard"));
-=======
-    await waitFor(() => expect(where()).toBe("/app"));
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   });
 
   it("confirms the payment on the Paystack return page and shows the live store link", async () => {
@@ -381,11 +345,7 @@ describe("dashboard", () => {
       }),
     });
     auth.signOut.mockResolvedValue();
-<<<<<<< HEAD
     renderAt("/dashboard");
-=======
-    renderAt("/app");
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     expect(await screen.findByRole("heading", { level: 1, name: "Welcome, Ama" })).toBeInTheDocument();
     expect(screen.getByText("Live")).toBeInTheDocument();
     expect(screen.getByText(/Active until 11 December 2026/)).toBeInTheDocument();
@@ -396,11 +356,7 @@ describe("dashboard", () => {
   it("sends vendors who haven't finished setup back to onboarding", async () => {
     signedIn();
     backend.getMe.mockResolvedValue({ ok: true, data: me({ next_step: "subscribe", store }) });
-<<<<<<< HEAD
     renderAt("/dashboard");
-=======
-    renderAt("/app");
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
     await waitFor(() => expect(where()).toBe("/onboarding"));
   });
 });
