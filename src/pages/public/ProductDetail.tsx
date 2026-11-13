@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { ResponsiveImage } from "../../components/ResponsiveImage";
 import { Seo } from "../../components/Seo";
 import { AddToCartButton } from "../../components/AddToCartButton";
 import { ShareButton } from "../../components/ShareButton";
@@ -9,6 +8,7 @@ import { directoryPath, productPath, storePath, storeProductsPath } from "../../
 import { buildProductSeo, storeLocation } from "../../lib/seo";
 import type { Product, VendorStore } from "../../types/store";
 import { ProductCard } from "./ProductCard";
+import { ProductGallery } from "./ProductGallery";
 
 export function ProductDetail({
   store,
@@ -19,46 +19,17 @@ export function ProductDetail({
   product: Product;
   related: Product[];
 }) {
-  const [main, ...rest] = product.images;
   return (
     <StoreShell store={store}>
       <Seo seo={buildProductSeo(store, product)} />
-      <div className="container sf-product">
+      <div className={`container sf-product${store.isDemo ? "" : " sf-product-buybar"}`}>
         <nav aria-label="Breadcrumb" className="sf-crumbs">
           <Link to={storePath(store.slug)}>{store.name}</Link> <span aria-hidden="true">/</span>{" "}
           <Link to={storeProductsPath(store.slug)}>Products</Link> <span aria-hidden="true">/</span>{" "}
           <span>{product.name}</span>
         </nav>
         <div className="sf-product-layout">
-          <div className="sf-gallery">
-            {main ? (
-              <ResponsiveImage
-                src={main.url}
-                alt={main.alt || product.name}
-                width={main.width}
-                height={main.height}
-                priority
-                sizes="(max-width: 760px) 100vw, 50vw"
-              />
-            ) : (
-              <span className="sf-img sf-img-0 sf-img-large" aria-hidden="true" />
-            )}
-            {rest.length > 0 && (
-              <ul className="sf-thumbs">
-                {rest.map((img, i) => (
-                  <li key={img.url}>
-                    <ResponsiveImage
-                      src={img.url}
-                      alt={img.alt || `${product.name} – photo ${i + 2}`}
-                      width={img.width}
-                      height={img.height}
-                      sizes="120px"
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <ProductGallery images={product.images} name={product.name} />
           <div className="sf-product-info">
             <h1 className="sf-h1">{product.name}</h1>
             <p className="sf-price sf-price-large">{formatNaira(product.priceKobo)}</p>
@@ -90,13 +61,19 @@ export function ProductDetail({
             </p>
           </div>
         </div>
+        {!store.isDemo && (
+          <div className="sf-buybar">
+            <div className="sf-buybar-price"><span>Price</span><b>{formatNaira(product.priceKobo)}</b></div>
+            <AddToCartButton storeSlug={store.slug} product={product} />
+          </div>
+        )}
         {related.length > 0 && (
           <section aria-labelledby="related-title" className="sf-related">
             <h2 id="related-title">More from {store.name}</h2>
             <ul className="sf-grid">
               {related.map((p, i) => (
                 <li key={p.id}>
-                  <ProductCard product={p} index={i} />
+                  <ProductCard product={p} index={i} allowCart={!store.isDemo} />
                 </li>
               ))}
             </ul>

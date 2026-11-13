@@ -56,7 +56,7 @@ export function PhoneNumberField({
             onChange(toE164(local, next));
           }}
         >
-          {COUNTRIES.map((item) => <option key={item.code} value={item.code}>{item.name} ({item.dialCode})</option>)}
+          {COUNTRIES.map((item) => <option key={item.code} value={item.code}>{item.dialCode} {item.name}</option>)}
         </select>
         <input
           id={`${id}-local`}

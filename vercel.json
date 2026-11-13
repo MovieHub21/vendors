@@ -1,46 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true,
-  "headers": [
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/dashboard",
-      "destination": "/app-shell"
-    },
-    {
-      "source": "/dashboard/:path*",
-      "destination": "/app-shell"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/app-shell"
-    }
-  ]
+  "buildCommand": "npm run build"
 }

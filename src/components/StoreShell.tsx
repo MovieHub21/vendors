@@ -5,6 +5,7 @@ import { SITE } from "../lib/site";
 import type { VendorStore } from "../types/store";
 import { ThemeToggle } from "./ThemeToggle";
 import { MessageCircle } from "lucide-react";
+import { formatNaira } from "../lib/money";
 import { whatsappLink, whatsappNumber } from "../lib/sales";
 import { CartDrawer } from "./CartDrawer";
 import { useCart } from "../storefront/CartContext";
@@ -12,6 +13,7 @@ import { useCart } from "../storefront/CartContext";
 /** Vendor-branded chrome for storefront pages. The vendor's name leads; SellSharp is a quiet credit in the footer. */
 export function StoreShell({ store, children }: { store: VendorStore; children: ReactNode }) {
   const cart = useCart();
+  const showCartBar = cart.count(store.slug) > 0 && cart.openFor !== store.slug;
   const socialLinks = [
     ["Instagram", store.instagramUrl], ["Facebook", store.facebookUrl], ["TikTok", store.tiktokUrl],
     ["YouTube", store.youtubeUrl], ["X", store.xUrl], ["Threads", store.threadsUrl],
@@ -19,7 +21,7 @@ export function StoreShell({ store, children }: { store: VendorStore; children: 
     [store.otherSocialLabel || "Other", store.otherSocialUrl],
   ].filter((item): item is [string, string] => Boolean(item[1]));
   return (
-    <div className="sf">
+    <div className={`sf${showCartBar ? " sf-has-cartbar" : ""}`}>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
@@ -59,6 +61,12 @@ export function StoreShell({ store, children }: { store: VendorStore; children: 
           <Link to="/">Online store powered by {SITE.name}</Link>
         </div>
       </footer>
+      {showCartBar && (
+        <button type="button" className="sf-cartbar" onClick={() => cart.openCart(store.slug)}>
+          <span>View cart · {cart.count(store.slug)} {cart.count(store.slug) === 1 ? "item" : "items"}</span>
+          <span>{formatNaira(cart.total(store.slug))}</span>
+        </button>
+      )}
       <CartDrawer store={store} />
     </div>
   );

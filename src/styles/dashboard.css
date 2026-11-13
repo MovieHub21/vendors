@@ -362,18 +362,18 @@ a.stat-tile:hover { border-color: var(--color-accent); }
   .vendor-live-status i { width: 9px; height: 9px; }
   .vendor-layout { display: block; min-height: calc(100vh - 60px); }
   .vendor-app-loading .vendor-layout { display: block; }
-  .vendor-app-loading .vendor-sidebar-loading { position: static; display: flex; flex-direction: row; height: auto; padding: 8px 12px; overflow: hidden; }
-  .vendor-app-loading .vendor-sidebar-loading > .page-skeleton-pulse { flex: 0 0 76px; height: 32px; margin: 0 !important; }
-  .vendor-app-loading .vendor-sidebar-loading > .page-skeleton-pulse:nth-child(n+8) { display: none; }
+  .vendor-app-loading .vendor-sidebar-loading { display: none; }
   .vendor-app-loading .vendor-main-inner { padding-top: 23px; }
   .vendor-loading-products { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .vendor-sidebar { position: sticky; top: 60px; z-index: 10; height: auto; overflow: hidden; padding: 7px 10px; border-right: 0; border-bottom: 1px solid var(--color-line); }
-  .vendor-sidebar-nav { flex-direction: row; align-items: center; gap: 10px; overflow-x: auto; scrollbar-width: thin; }
-  .vendor-nav-group { display: contents; }
-  .vendor-nav-heading, .vendor-logout { display: none; }
-  .vendor-nav-link { flex: none; min-height: 36px; padding: 0 9px; font-size: 12px; }
-  .vendor-nav-link svg { width: 15px; height: 15px; }
-  .vendor-record-sale { flex: none; min-height: 36px; margin: 0; font-size: 12px; }
+  /* The sidebar becomes a slide-in drawer (same content as desktop), opened from the menu button. */
+  .vendor-menu-btn { display: grid; }
+  .vendor-sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; width: min(84vw, 310px); height: 100vh; height: 100dvh; padding: 14px 14px calc(18px + env(safe-area-inset-bottom)); overflow-y: auto; border-right: 1px solid var(--color-line); transform: translateX(-102%); visibility: hidden; transition: transform .25s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .25s; }
+  .vendor-sidebar.is-open { transform: none; visibility: visible; transition-delay: 0s; box-shadow: 18px 0 50px rgb(0 0 0 / 22%); }
+  .vendor-sidebar-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 18px 4px; }
+  .vendor-scrim { position: fixed; inset: 0; z-index: 45; background: rgb(11 18 31 / 52%); animation: vendor-scrim-in .2s ease-out; }
+  .vendor-nav-link { min-height: 46px; font-size: 15px; }
+  .vendor-record-sale { min-height: 48px; font-size: 15px; }
+  .vendor-logout { padding: 16px 0 4px; font-size: 15px; }
   .vendor-main-inner { padding: 23px 16px 48px; }
   .vendor-main .dash-head { align-items: start; margin-bottom: 18px; }
   .vendor-main .dash-head h1 { font-size: 24px; }
@@ -389,3 +389,22 @@ a.stat-tile:hover { border-color: var(--color-accent); }
 .business-export-card h2 { margin: 0 0 8px; font: 750 20px var(--font-display); }
 .business-export-card > ul { display: grid; gap: 7px; margin: 20px 0; padding-left: 21px; color: var(--color-muted); font-size: 13px; }
 .business-export-note { margin: 14px 0 0; font-size: 12px; }
+
+/* Menu button + drawer chrome (hidden on desktop, where the sidebar is always visible). */
+.vendor-topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.vendor-menu-btn { display: none; place-items: center; width: 44px; height: 44px; margin-left: -8px; border: 0; border-radius: 12px; background: transparent; color: var(--color-ink); cursor: pointer; }
+.vendor-menu-btn:hover { background: var(--color-band); }
+.vendor-sidebar-head, .vendor-scrim { display: none; }
+@media (max-width: 640px) { .vendor-sidebar-head { display: flex; } .vendor-sidebar-close { margin-left: 0; } }
+@keyframes vendor-scrim-in { from { opacity: 0; } }
+@media (min-width: 641px) { .vendor-scrim { display: none !important; } }
+@media (prefers-reduced-motion: reduce) { .vendor-sidebar { transition: none; } .vendor-scrim { animation: none; } }
+
+@media (max-width: 640px) {
+  .vendor-topbar-left { gap: 9px; }
+  .vendor-topbar .vendor-menu-btn { display: grid; width: 36px; height: 36px; margin: 0; border-radius: 10px; background: var(--color-brand); color: #fff; }
+  .vendor-topbar-left .vendor-brand-mark { display: none; }
+  .vendor-topbar .vendor-menu-btn:hover { background: var(--color-brand); filter: brightness(1.08); }
+  .vendor-sidebar-close { display: grid; width: 40px; height: 40px; margin: 0; border-radius: 10px; background: transparent; color: var(--color-ink); }
+  .vendor-sidebar-close:hover { background: var(--color-band); filter: none; }
+}

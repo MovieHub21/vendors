@@ -1,6 +1,6 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { FileDown, LayoutDashboard, LayoutTemplate, LogOut, Package, Plus, Receipt, Search, ShoppingBag, Store, Users, Wallet, ClipboardList, type LucideIcon } from "lucide-react";
+import { FileDown, LayoutDashboard, LayoutTemplate, LogOut, Menu, Package, Plus, Receipt, Search, ShoppingBag, Store, Users, Wallet, ClipboardList, X, type LucideIcon } from "lucide-react";
 import { Alert } from "./AuthLayout";
 import { Seo } from "./Seo";
 import type { PageSeo } from "../lib/seo";
@@ -76,6 +76,19 @@ export function DashboardShell({
   const { me, error } = useVendor();
   const navigate = useNavigate();
   const location = useLocation();
+  // Phones: the sidebar is a slide-in drawer opened from the menu button (on larger screens it is always visible).
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
   if (me && me.next_step !== "done") return <Navigate to="/onboarding" replace />;
   const name = me?.profile?.full_name?.trim() || me?.user.email || "Vendor";
   const initials = name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("") || "V";
@@ -89,10 +102,15 @@ export function DashboardShell({
         <a className="skip-link" href="#main">Skip to content</a>
         <header className="vendor-topbar">
           <div className="vendor-topbar-inner">
-            <Link to="/dashboard" className="vendor-brand" aria-label="SellSharp dashboard">
-              <span className="vendor-brand-mark"><ShoppingBag size={17} aria-hidden="true" /></span>
-              <span>Sell<span>Sharp</span></span>
-            </Link>
+            <div className="vendor-topbar-left">
+              <button type="button" className="vendor-menu-btn" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} aria-controls="vendor-sidebar" onClick={() => setMenuOpen((open) => !open)}>
+                {menuOpen ? <X size={21} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+              </button>
+              <Link to="/dashboard" className="vendor-brand" aria-label="SellSharp dashboard">
+                <span className="vendor-brand-mark"><ShoppingBag size={17} aria-hidden="true" /></span>
+                <span>Sell<span>Sharp</span></span>
+              </Link>
+            </div>
             <div className="vendor-topbar-tools">
               {me?.store && (
                 <span className={`vendor-live-status${storeIsLive ? " is-live" : ""}`}>
@@ -105,7 +123,12 @@ export function DashboardShell({
           </div>
         </header>
         <div className="vendor-layout">
-          <aside className="vendor-sidebar">
+          {menuOpen && <div className="vendor-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
+          <aside id="vendor-sidebar" className={`vendor-sidebar${menuOpen ? " is-open" : ""}`} onClick={(e) => { if ((e.target as HTMLElement).closest("a")) setMenuOpen(false); }}>
+            <div className="vendor-sidebar-head">
+              <span className="vendor-brand"><span className="vendor-brand-mark"><ShoppingBag size={17} aria-hidden="true" /></span><span>Sell<span>Sharp</span></span></span>
+              <button type="button" className="vendor-menu-btn vendor-sidebar-close" aria-label="Close menu" onClick={() => setMenuOpen(false)}><X size={22} aria-hidden="true" /></button>
+            </div>
             <nav className="vendor-sidebar-nav" aria-label="Vendor workspace">
               {NAV_GROUPS.map((group) => (
                 <div className="vendor-nav-group" key={group.label}>

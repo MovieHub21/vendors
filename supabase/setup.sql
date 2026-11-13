@@ -35,41 +35,29 @@ insert into public.reserved_slugs (slug) values
   ('admin'),
   ('api'),
   ('app'),
-<<<<<<< HEAD
   ('app-shell'),
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   ('assets'),
   ('auth'),
   ('billing'),
   ('blog'),
   ('cart'),
-<<<<<<< HEAD
   ('categories'),
   ('category'),
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   ('cdn'),
   ('checkout'),
   ('contact'),
   ('customers'),
   ('dashboard'),
   ('debts'),
-<<<<<<< HEAD
   ('directory'),
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   ('docs'),
   ('faq'),
   ('features'),
   ('forgot-password'),
   ('help'),
   ('legal'),
-<<<<<<< HEAD
   ('location'),
   ('locations'),
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   ('login'),
   ('mail'),
   ('null'),
@@ -89,10 +77,7 @@ insert into public.reserved_slugs (slug) values
   ('reports'),
   ('reset-password'),
   ('robots'),
-<<<<<<< HEAD
   ('search'),
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   ('security'),
   ('sellsharp'),
   ('settings'),
@@ -101,11 +86,8 @@ insert into public.reserved_slugs (slug) values
   ('shops'),
   ('signup'),
   ('sitemap'),
-<<<<<<< HEAD
   ('sitemaps'),
   ('ssr-template'),
-=======
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
   ('static'),
   ('status'),
   ('store'),

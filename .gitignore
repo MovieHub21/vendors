@@ -53,3 +53,8 @@ temp/
 .env.local
 supabase/functions/.env
 supabase/.temp
+
+# Build outputs
+dist-ssr/
+dist-vercel/
+.vercel/

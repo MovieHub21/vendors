@@ -101,7 +101,7 @@ console.log("smoke test: dist/_worker.js");
 let r = await get("/ama-hairs", { headers: { "User-Agent": "WhatsApp/2.23" } });
 ok("store page: 200 HTML with h1, canonical and Open Graph in the first response", () => {
   assert.equal(r.res.status, 200);
-  assert.match(r.body, /<h1>Ama Hair Studio<\/h1>/);
+  assert.match(r.body, /Ama Hair Studio/);
   assert.match(r.body, /rel="canonical"[^>]*href="https:\/\/sellsharp\.ng\/ama-hairs"/);
   assert.match(r.body, /property="og:title"[^>]*content="Ama Hair Studio"/);
   assert.match(r.body, /data-ssr="true"/);

@@ -229,7 +229,7 @@ function SubscribeStep({ me }: { me: Me }) {
           <Check size={15} /> Orders, customers, receipts and debt tracking
         </li>
         <li>
-          <Check size={15} /> Pay securely with card, bank transfer or USSD through Paystack
+          <Check size={15} /> Pay securely with Paystack
         </li>
       </ul>
       {error && <Alert kind="error">{error}</Alert>}

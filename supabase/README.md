@@ -15,11 +15,7 @@ supabase/
 
 1. Supabase dashboard → **SQL Editor → New query**.
 2. Paste the whole of **`supabase/setup.sql`** and click **Run**. It is safe to run again.
-<<<<<<< HEAD
 3. Check **Table Editor**: you should see `profiles`, `stores`, `subscription_plans`, `subscriptions`, `payments`, `webhook_events`, `reserved_slugs`, `products`, `product_images`, `customers`, `orders`, `order_items`, `order_payments`, `receipts`.
-=======
-3. Check **Table Editor**: you should see `profiles`, `stores`, `subscription_plans`, `subscriptions`, `payments`, `webhook_events`, `reserved_slugs`.
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 
 (Prefer the CLI? `supabase link --project-ref <ref>` then `supabase db push` applies `migrations/` instead.)
 
@@ -43,11 +39,7 @@ supabase login
 supabase link --project-ref YOUR-PROJECT-REF
 cp supabase/functions/.env.example supabase/functions/.env      # fill in PAYSTACK_SECRET_KEY and SITE_URL
 supabase secrets set --env-file supabase/functions/.env
-<<<<<<< HEAD
 supabase functions deploy me check-slug create-store update-store-seo subscription-initialize subscription-verify paystack-webhook
-=======
-supabase functions deploy me check-slug create-store subscription-initialize subscription-verify paystack-webhook
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
 ```
 
 `SUPABASE_URL` and the Supabase keys are injected automatically. Never put the secret key in the website's `.env`.
@@ -88,7 +80,6 @@ All functions need `Authorization: Bearer <user session token>` (the website add
 - **CORS** only allows `SITE_URL`, localhost and `ALLOWED_ORIGINS`.
 - **Not built yet** (add before heavy traffic): per-user rate limits on the functions, and a support flow for refunds.
 
-<<<<<<< HEAD
 ## Public data and the website's server renderer
 
 Public pages read the **public views** (`public_stores`, `public_products`, `public_product_redirects`, `sitemap_stores`, `sitemap_products`, `public_directory_*`) through Supabase's REST API with the **publishable** key. These views are the only public surface; the tables themselves stay private. The eligibility rules (which stores/products may be indexed) live in `migrations/…0500_seo.sql`, in the `private` schema, so the Data API cannot call them. Re-running a migration is safe.
@@ -96,7 +87,6 @@ Public pages read the **public views** (`public_stores`, `public_products`, `pub
 ## Tests
 
 `npm test` runs the migrations on PGlite (a real Postgres engine) to prove the constraints, Row Level Security, privileges and the payment function, and unit-tests the function logic (validation, webhook signature, payment confirmation). The function files themselves are type-checked with Deno (`deno check supabase/functions/*/index.ts`).
-
 
 ## Sales functions (added with migration 0600)
 
@@ -111,8 +101,3 @@ Deploy with `supabase functions deploy <name>`. All need a login except `place-o
 | `order-receipt` | Vendor: create or re-issue a receipt |
 | `dashboard-summary` | Vendor: dashboard figures, computed in Postgres |
 | `save-product`, `product-action` | Vendor: add/edit products; duplicate, hide/show, delete |
-=======
-## Tests
-
-`npm test` runs the migrations on PGlite (a real Postgres engine) to prove the constraints, Row Level Security, privileges and the payment function, and unit-tests the function logic (validation, webhook signature, payment confirmation). The function files themselves are type-checked with Deno (`deno check supabase/functions/*/index.ts`).
->>>>>>> fff1e204ef1fae4241e0315519c70051791e632c
