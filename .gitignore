@@ -9,12 +9,7 @@ build/
 # Environment variables and secrets
 .env
 .env.*
-.env.example
-
-# Supabase Edge Functions environment files
-supabase/functions/.env
-supabase/functions/.env.*
-supabase/functions/.env.example
+!.env.example
 
 # Logs
 logs/

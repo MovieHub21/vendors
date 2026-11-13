@@ -1,0 +1,10 @@
+# Cloudflare Pages. Build command: `npm run build`   Output directory: `dist`
+# `dist/_worker.js` (built by npm run build) renders store/product pages on the server and serves the dynamic sitemaps.
+name = "sellsharp"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-11-01"
+
+# Set these in Cloudflare → Pages → Settings → Variables and Secrets. Both are PUBLIC values (never the secret key):
+#   SUPABASE_URL              https://YOUR-PROJECT-REF.supabase.co
+#   SUPABASE_PUBLISHABLE_KEY  sb_publishable_…
+# And, for the BUILD (Environment variables → Build): VITE_SITE_URL, VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY.

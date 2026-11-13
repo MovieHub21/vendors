@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/assets/*",
+    "/favicon.svg",
+    "/apple-touch-icon.png",
+    "/logo-512.png",
+    "/og-default.png",
+    "/robots.txt",
+    "/sitemaps/platform.xml"
+  ]
+}
