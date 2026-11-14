@@ -4,12 +4,16 @@ import { RequireAuth } from "./auth/RequireAuth";
 import MarketingLayout from "./layouts/MarketingLayout";
 import { REDIRECT_ROUTES } from "./lib/routes";
 import About from "./pages/About";
+import AdminConsole from "./pages/AdminConsole";
+import VendorSupport from "./pages/VendorSupport";
 import Contact from "./pages/Contact";
 
 import Customers from "./pages/Customers";
 import Dashboard from "./pages/Dashboard";
 import DashboardSeo from "./pages/DashboardSeo";
 import BusinessExport from "./pages/BusinessExport";
+import DocumentDesigner from "./pages/DocumentDesigner";
+import InvoicePage from "./pages/InvoicePage";
 import StoreDesign from "./pages/StoreDesign";
 
 import Faq from "./pages/Faq";
@@ -43,6 +47,7 @@ export default function App() {
     <ThemeProvider>
       <CartProvider>
       <Routes>
+        <Route path="/management" element={<RequireAuth><AdminConsole /></RequireAuth>} />
         <Route element={<MarketingLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/features" element={<Features />} />
@@ -148,10 +153,34 @@ export default function App() {
             }
           />
           <Route
+            path="/dashboard/support"
+            element={
+              <RequireAuth>
+                <VendorSupport />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="/dashboard/receipt/:orderId"
             element={
               <RequireAuth>
                 <ReceiptPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard/invoice/:orderId"
+            element={
+              <RequireAuth>
+                <InvoicePage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard/templates"
+            element={
+              <RequireAuth>
+                <DocumentDesigner />
               </RequireAuth>
             }
           />

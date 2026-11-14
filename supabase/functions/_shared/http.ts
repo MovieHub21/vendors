@@ -28,10 +28,10 @@ export function json(body: unknown, status = 200, headers: Record<string, string
   });
 }
 
-/** Parses a JSON object body; anything else is a 400. Bodies over 10 kB are refused. */
-export async function readJsonObject(req: Request): Promise<Record<string, unknown>> {
+/** Parses a JSON object body; anything else is a 400. Bodies over 10 kB are refused unless a function asks for more. */
+export async function readJsonObject(req: Request, maxChars = 10_000): Promise<Record<string, unknown>> {
   const text = await req.text();
-  if (text.length > 10_000) throw new HttpError(413, "body_too_large");
+  if (text.length > maxChars) throw new HttpError(413, "body_too_large");
   if (!text.trim()) return {};
   let parsed: unknown;
   try {

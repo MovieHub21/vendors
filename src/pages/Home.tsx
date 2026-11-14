@@ -145,7 +145,7 @@ export default function Home() {
             <SectionHeading
               eyebrow="MEET YOUR NEW WORKSPACE"
               title="The small-business tools that make a big difference."
-              body="SellSharp gives your business a proper home — from the first customer click to the final receipt."
+              body="SellSharp gives your business a proper home — from the first customer click to the final receipt or invoice."
             />
           </div>
           <div className="feature-grid">

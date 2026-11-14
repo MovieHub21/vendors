@@ -14,6 +14,8 @@ import "./styles/storefront.css";
 import "./styles/auth.css";
 
 import "./styles/dashboard.css";
+import "./styles/designer.css";
+import "./styles/admin.css";
 import "./styles/pwa.css";
 import "./styles/responsive.css";
 import "./styles/utilities.css";

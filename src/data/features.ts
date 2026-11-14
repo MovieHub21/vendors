@@ -4,6 +4,7 @@ import {
   FileText,
   MessageCircle,
   Package,
+  Palette,
   Store,
   Users,
   Wallet,
@@ -29,8 +30,8 @@ export const HOME_FEATURES: Feature[] = [
   },
   {
     icon: FileText,
-    title: "Receipts in seconds",
-    text: "Create clean, branded receipts you can download, print or send straight to WhatsApp.",
+    title: "Receipts & invoices",
+    text: "Create receipts and invoices in seconds, design them your own way, and send them as a PDF straight to WhatsApp.",
   },
   {
     icon: Wallet,
@@ -71,6 +72,16 @@ export const FEATURE_PAGE_ITEMS: Feature[] = [
     text: "Create a receipt for an order, keep a record and share it with a customer. Make every transaction feel more professional.",
   },
   {
+    icon: FileText,
+    title: "Invoices with your account details",
+    text: "Owed money on an order? Generate an invoice that shows the balance and where to pay, with your bank name, account number and any other details you add.",
+  },
+  {
+    icon: Palette,
+    title: "Design your own receipts and invoices",
+    text: "Drag blocks around the page, pick your colours and fonts, and add your own text. No design skills needed, and it works like the tools you already know.",
+  },
+  {
     icon: Wallet,
     title: "Debt tracking",
     text: "Record outstanding balances and partial payments. See what is still owed and keep payment history attached to the right customer.",
@@ -97,7 +108,7 @@ export const PRICING_INCLUDED = [
   "Product catalogue with photos and prices",
   "Order management and status updates",
   "Customer records and order history",
-  "Branded receipts you can share",
+  "Receipts and invoices you can design and share",
   "Debt and partial-payment tracking",
   "Sales overview and basic reports",
   "WhatsApp sharing tools",

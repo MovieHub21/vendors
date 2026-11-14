@@ -32,7 +32,7 @@ export default function Pricing() {
               One monthly price.
             </h2>
             <p>
-              Start with the tools that help you take orders, keep customer records, send receipts and stay on top of
+              Start with the tools that help you take orders, keep customer records, send receipts and invoices and stay on top of
               payments.
             </p>
             <div className="pricing-assurance">

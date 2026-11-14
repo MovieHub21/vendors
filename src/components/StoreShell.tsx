@@ -9,6 +9,7 @@ import { formatNaira } from "../lib/money";
 import { whatsappLink, whatsappNumber } from "../lib/sales";
 import { CartDrawer } from "./CartDrawer";
 import { useCart } from "../storefront/CartContext";
+import { StoreReportForm } from "./StoreReportForm";
 
 const SOCIAL_ICONS: Record<string, LucideIcon> = {
   Instagram, Facebook, TikTok: Music2, YouTube: Youtube, X: XBrand, Threads: AtSign,
@@ -63,10 +64,11 @@ export function StoreShell({ store, children }: { store: VendorStore; children: 
             © <span suppressHydrationWarning>{new Date().getFullYear()}</span> {store.name}
           </span>
           {whatsappNumber(store.contactPhone) && (
-            <a className="sf-footer-chat" href={whatsappLink(`Hello ${store.name}, I have a question about your store.`, store.contactPhone)} target="_blank" rel="noopener noreferrer">
+            <a className="sf-footer-chat" href={whatsappLink(`Hello, I found your store on SellSharp and have a few enquiries.`, store.contactPhone)} target="_blank" rel="noopener noreferrer">
               <MessageCircle size={15} aria-hidden="true" /> Chat with seller
             </a>
           )}
+          {!store.isDemo && <StoreReportForm store={store} />}
           <Link to="/">Online store powered by {SITE.name}</Link>
         </div>
       </footer>

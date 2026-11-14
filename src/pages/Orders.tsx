@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { MessageCircle, Receipt } from "lucide-react";
+import { FileText, MessageCircle, Receipt } from "lucide-react";
 import { Alert } from "../components/AuthLayout";
 import { DashboardShell, dateTime, PayBadge, StatusBadge } from "../components/DashboardShell";
 import { PaymentForm } from "../components/PaymentForm";
@@ -124,6 +124,11 @@ function Detail({ id, storeName, onChanged }: { id: string; storeName: string; o
         <Link className="btn btn-primary" to={`/dashboard/receipt/${order.id}`}>
           <Receipt size={16} aria-hidden="true" /> Receipt
         </Link>
+        {!cancelled && outstanding > 0 && (
+          <Link className="btn btn-outline" to={`/dashboard/invoice/${order.id}`}>
+            <FileText size={16} aria-hidden="true" /> Invoice
+          </Link>
+        )}
         {phone && (
           <a
             className="btn btn-outline"

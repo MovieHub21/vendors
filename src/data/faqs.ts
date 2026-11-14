@@ -1,7 +1,7 @@
 export const FAQS: ReadonlyArray<readonly [question: string, answer: string]> = [
   [
     "What is SellSharp?",
-    "SellSharp is a business management platform for vendors who sell through WhatsApp, Instagram and other social channels. It gives you a storefront and a dashboard to manage orders, products, customers, receipts and outstanding balances.",
+    "SellSharp is a business management platform for vendors who sell through WhatsApp, Instagram and other social channels. It gives you a storefront and a dashboard to manage orders, products, customers, receipts, invoices and outstanding balances.",
   ],
   [
     "Do I need a website already?",
@@ -22,6 +22,14 @@ export const FAQS: ReadonlyArray<readonly [question: string, answer: string]> = 
   [
     "Can I track customers who owe me?",
     "Yes. The debt tracker is designed to show outstanding balances, partial payments and payment history for each customer.",
+  ],
+  [
+    "Can I send an invoice to a customer who hasn't paid?",
+    "Yes. For any order that is unpaid or part-paid, you can generate an invoice that shows the balance and the bank account (or other payment details) you want customers to pay into. Download it as a PDF or send it on WhatsApp.",
+  ],
+  [
+    "Can I design my own receipts and invoices?",
+    "Yes. A drag-and-drop designer lets you place, resize and colour each part of the page, change fonts and add your own text. Your design is used for every receipt and invoice you create.",
   ],
   [
     "Can I use SellSharp on my phone?",

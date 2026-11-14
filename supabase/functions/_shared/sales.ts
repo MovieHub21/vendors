@@ -182,6 +182,7 @@ const RPC_ERRORS: Record<string, [number, string, string]> = {
   customer_not_found: [404, "customer_not_found", "That customer wasn't found."],
   order_not_found: [404, "order_not_found", "That order wasn't found."],
   order_cancelled: [409, "order_cancelled", "This order is cancelled."],
+  order_paid: [409, "order_paid", "This order is fully paid, so it has no invoice. Open its receipt instead."],
   invalid_transition: [409, "invalid_transition", "That status change isn't allowed."],
   overpayment: [409, "overpayment", "That is more than the customer still owes."],
   invalid_payment: [422, "invalid_payment", "Please check the payment details."],

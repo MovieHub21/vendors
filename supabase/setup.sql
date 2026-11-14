@@ -1789,3 +1789,433 @@ create or replace view public.public_stores as
 
 revoke all on public.public_stores from anon, authenticated;
 grant select on public.public_stores to anon, authenticated;
+
+-- ============================================================
+-- 20261113000400_platform_admin.sql
+-- ============================================================
+-- Platform administration: explicit admin membership, support inbox and tamper-resistant action history.
+
+create table if not exists public.platform_admins (
+  user_id    uuid primary key references auth.users (id) on delete cascade,
+  added_at   timestamptz not null default now(),
+  added_by   uuid references auth.users (id) on delete set null
+);
+alter table public.platform_admins enable row level security;
+revoke all on public.platform_admins from public, anon, authenticated;
+grant select on public.platform_admins to service_role;
+
+create table if not exists public.admin_audit_log (
+  id          uuid primary key default gen_random_uuid(),
+  actor_id    uuid references auth.users (id) on delete set null,
+  action      text not null,
+  target_type text not null,
+  target_id   text not null,
+  reason      text not null,
+  details     jsonb not null default '{}'::jsonb,
+  created_at  timestamptz not null default now()
+);
+create index if not exists admin_audit_log_created_idx on public.admin_audit_log (created_at desc);
+create index if not exists admin_audit_log_target_idx on public.admin_audit_log (target_type, target_id, created_at desc);
+alter table public.admin_audit_log enable row level security;
+revoke all on public.admin_audit_log from public, anon, authenticated;
+grant select on public.admin_audit_log to service_role;
+
+create table if not exists public.support_requests (
+  id                 uuid primary key default gen_random_uuid(),
+  requester_user_id  uuid references auth.users (id) on delete set null,
+  name               text not null check (char_length(btrim(name)) between 1 and 120),
+  email              text not null check (char_length(email) <= 254),
+  topic              text not null check (char_length(topic) between 1 and 80),
+  message            text not null check (char_length(btrim(message)) between 5 and 5000),
+  status             text not null default 'open' check (status in ('open', 'in_progress', 'resolved', 'closed')),
+  admin_note         text not null default '' check (char_length(admin_note) <= 2000),
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now(),
+  resolved_at        timestamptz
+);
+create index if not exists support_requests_status_created_idx on public.support_requests (status, created_at desc);
+alter table public.support_requests enable row level security;
+revoke all on public.support_requests from public, anon, authenticated;
+grant select, insert on public.support_requests to service_role;
+
+-- All RPCs are callable only by the Edge Function service role and still check explicit admin membership.
+create or replace function public.admin_platform_metrics(p_actor uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not exists (select 1 from public.platform_admins a where a.user_id = p_actor) then
+    raise exception 'admin_required' using errcode = '42501';
+  end if;
+  return jsonb_build_object(
+    'vendors', (select count(*) from public.stores),
+    'published_stores', (select count(*) from public.stores where is_published and status = 'active'),
+    'suspended_stores', (select count(*) from public.stores where status = 'suspended'),
+    'active_subscriptions', (select count(*) from public.subscriptions where status = 'active' and current_period_end > now()),
+    'expired_subscriptions', (select count(*) from public.subscriptions where status <> 'active' or current_period_end <= now()),
+    'orders_this_month', (select count(*) from public.orders where created_at >= date_trunc('month', now())),
+    'payments_last_30_days', (select count(*) from public.payments where created_at >= now() - interval '30 days'),
+    'open_support_requests', (select count(*) from public.support_requests where status in ('open', 'in_progress'))
+  );
+end;
+$$;
+
+create or replace function public.admin_search_vendors(p_actor uuid, p_search text default '', p_limit integer default 50, p_offset integer default 0)
+returns table (
+  store_id uuid, owner_id uuid, store_name text, slug text, category text, store_status text,
+  is_published boolean, store_created_at timestamptz, full_name text, email text,
+  subscription_status text, plan_code text, current_period_end timestamptz
+)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not exists (select 1 from public.platform_admins a where a.user_id = p_actor) then
+    raise exception 'admin_required' using errcode = '42501';
+  end if;
+  return query
+    select s.id, s.owner_id, s.name, s.slug, s.category, s.status, s.is_published, s.created_at,
+           coalesce(pr.full_name, ''), u.email::text, sub.status, sub.plan_code, sub.current_period_end
+      from public.stores s
+      join auth.users u on u.id = s.owner_id
+      left join public.profiles pr on pr.id = s.owner_id
+      left join public.subscriptions sub on sub.owner_id = s.owner_id
+     where coalesce(p_search, '') = ''
+        or s.name ilike '%' || p_search || '%'
+        or s.slug ilike '%' || p_search || '%'
+        or s.category ilike '%' || p_search || '%'
+        or coalesce(pr.full_name, '') ilike '%' || p_search || '%'
+        or coalesce(u.email, '') ilike '%' || p_search || '%'
+     order by s.created_at desc
+     limit greatest(1, least(coalesce(p_limit, 50), 100))
+    offset greatest(0, coalesce(p_offset, 0));
+end;
+$$;
+
+create or replace function public.admin_set_store_status(p_actor uuid, p_store_id uuid, p_status text, p_reason text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  target public.stores;
+  previous_status text;
+begin
+  if not exists (select 1 from public.platform_admins a where a.user_id = p_actor) then
+    raise exception 'admin_required' using errcode = '42501';
+  end if;
+  if p_status is null or p_status not in ('active', 'suspended') or char_length(btrim(coalesce(p_reason, ''))) < 5 or char_length(p_reason) > 1000 then
+    raise exception 'invalid_admin_action' using errcode = '22023';
+  end if;
+  select status into previous_status from public.stores where id = p_store_id for update;
+  if not found then raise exception 'store_not_found' using errcode = 'P0002'; end if;
+  update public.stores set status = p_status where id = p_store_id returning * into target;
+  if not found then raise exception 'store_not_found' using errcode = 'P0002'; end if;
+  insert into public.admin_audit_log(actor_id, action, target_type, target_id, reason, details)
+  values (p_actor, case when p_status = 'suspended' then 'store_suspended' else 'store_reactivated' end,
+          'store', target.id::text, btrim(p_reason), jsonb_build_object('store_name', target.name, 'slug', target.slug, 'previous_status', previous_status, 'status', target.status));
+  return jsonb_build_object('store_id', target.id, 'status', target.status);
+end;
+$$;
+
+create or replace function public.admin_update_support_request(p_actor uuid, p_request_id uuid, p_status text, p_note text default '')
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  ticket public.support_requests;
+  previous_status text;
+begin
+  if not exists (select 1 from public.platform_admins a where a.user_id = p_actor) then
+    raise exception 'admin_required' using errcode = '42501';
+  end if;
+  if p_status is null or p_status not in ('open', 'in_progress', 'resolved', 'closed') or char_length(coalesce(p_note, '')) > 2000 then
+    raise exception 'invalid_admin_action' using errcode = '22023';
+  end if;
+  select status into previous_status from public.support_requests where id = p_request_id for update;
+  if not found then raise exception 'support_request_not_found' using errcode = 'P0002'; end if;
+  update public.support_requests
+     set status = p_status,
+         admin_note = coalesce(p_note, ''),
+         resolved_at = case when p_status in ('resolved', 'closed') then coalesce(resolved_at, now()) else null end,
+         updated_at = now()
+   where id = p_request_id returning * into ticket;
+  if not found then raise exception 'support_request_not_found' using errcode = 'P0002'; end if;
+  insert into public.admin_audit_log(actor_id, action, target_type, target_id, reason, details)
+  values (p_actor, 'support_request_updated', 'support_request', ticket.id::text,
+          case when btrim(coalesce(p_note, '')) = '' then 'Support request status updated' else btrim(p_note) end,
+          jsonb_build_object('previous_status', previous_status, 'status', ticket.status));
+  return jsonb_build_object('id', ticket.id, 'status', ticket.status, 'updated_at', ticket.updated_at);
+end;
+$$;
+
+revoke all on function public.admin_platform_metrics(uuid) from public, anon, authenticated;
+revoke all on function public.admin_search_vendors(uuid, text, integer, integer) from public, anon, authenticated;
+revoke all on function public.admin_set_store_status(uuid, uuid, text, text) from public, anon, authenticated;
+revoke all on function public.admin_update_support_request(uuid, uuid, text, text) from public, anon, authenticated;
+grant execute on function public.admin_platform_metrics(uuid) to service_role;
+grant execute on function public.admin_search_vendors(uuid, text, integer, integer) to service_role;
+grant execute on function public.admin_set_store_status(uuid, uuid, text, text) to service_role;
+grant execute on function public.admin_update_support_request(uuid, uuid, text, text) to service_role;
+
+-- ============================================================
+-- 20261113000500_support_reports.sql
+-- ============================================================
+-- Extend the existing support inbox for storefront reports and vendor complaints.
+alter table public.support_requests
+  add column if not exists phone text check (phone is null or (char_length(phone) between 5 and 30 and phone ~ '^\+?[0-9 ()-]+$')),
+  add column if not exists request_type text not null default 'general' check (request_type in ('general', 'store_report', 'vendor_complaint')),
+  add column if not exists reported_store_id uuid references public.stores (id) on delete set null,
+  add column if not exists reported_store_name text,
+  add column if not exists reported_store_slug text;
+
+create index if not exists support_requests_type_created_idx on public.support_requests (request_type, created_at desc);
+
+-- ============================================================
+-- 20261113000600_admin_hierarchy.sql
+-- ============================================================
+-- Explicit platform-admin hierarchy. Existing admin accounts retain full access as super admins.
+alter table public.platform_admins
+  add column if not exists role text not null default 'super_admin' check (role in ('super_admin', 'admin')),
+  add column if not exists permissions text[] not null default '{}'::text[] check (
+    permissions <@ array['overview', 'vendors', 'payments', 'support', 'activity']::text[]
+  );
+
+create index if not exists platform_admins_role_idx on public.platform_admins (role);
+
+create or replace function public.admin_list_memberships(p_actor uuid)
+returns table (
+  user_id uuid,
+  email text,
+  role text,
+  permissions text[],
+  added_at timestamptz,
+  added_by uuid
+)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not exists (select 1 from public.platform_admins a where a.user_id = p_actor and a.role = 'super_admin') then
+    raise exception 'super_admin_required' using errcode = '42501';
+  end if;
+  return query
+    select a.user_id, u.email::text, a.role, a.permissions, a.added_at, a.added_by
+      from public.platform_admins a
+      join auth.users u on u.id = a.user_id
+     order by case when a.role = 'super_admin' then 0 else 1 end, lower(u.email);
+end;
+$$;
+
+create or replace function public.admin_manage_membership(
+  p_actor uuid,
+  p_operation text,
+  p_email text,
+  p_permissions text[] default '{}'::text[],
+  p_reason text default ''
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  target_user_id uuid;
+  target_email text;
+  prior_permissions text[];
+begin
+  if not exists (select 1 from public.platform_admins a where a.user_id = p_actor and a.role = 'super_admin') then
+    raise exception 'super_admin_required' using errcode = '42501';
+  end if;
+  if p_operation is null or p_operation not in ('add', 'update_permissions', 'remove')
+     or char_length(btrim(coalesce(p_reason, ''))) < 5
+     or char_length(coalesce(p_reason, '')) > 1000 then
+    raise exception 'invalid_admin_action' using errcode = '22023';
+  end if;
+  if p_operation in ('add', 'update_permissions') and (
+    coalesce(cardinality(p_permissions), 0) = 0
+    or not coalesce(p_permissions <@ array['overview', 'vendors', 'payments', 'support', 'activity']::text[], false)
+  ) then
+    raise exception 'invalid_admin_permissions' using errcode = '22023';
+  end if;
+
+  select u.id, u.email::text into target_user_id, target_email
+    from auth.users u
+   where lower(u.email) = lower(btrim(coalesce(p_email, '')))
+   limit 1;
+  if target_user_id is null then raise exception 'admin_user_not_found' using errcode = 'P0002'; end if;
+
+  if p_operation = 'add' then
+    if exists (select 1 from public.platform_admins a where a.user_id = target_user_id) then
+      raise exception 'admin_already_exists' using errcode = '23505';
+    end if;
+    insert into public.platform_admins(user_id, role, permissions, added_by)
+    values (target_user_id, 'admin', p_permissions, p_actor);
+    insert into public.admin_audit_log(actor_id, action, target_type, target_id, reason, details)
+    values (p_actor, 'admin_added', 'admin', target_user_id::text, btrim(p_reason),
+            jsonb_build_object('email', target_email, 'permissions', p_permissions));
+    return jsonb_build_object('user_id', target_user_id, 'email', target_email, 'role', 'admin', 'permissions', p_permissions);
+  end if;
+
+  select a.permissions into prior_permissions
+    from public.platform_admins a
+   where a.user_id = target_user_id and a.role = 'admin'
+   for update;
+  if not found then raise exception 'admin_account_not_found' using errcode = 'P0002'; end if;
+
+  if p_operation = 'update_permissions' then
+    update public.platform_admins set permissions = p_permissions, added_by = p_actor where user_id = target_user_id;
+    insert into public.admin_audit_log(actor_id, action, target_type, target_id, reason, details)
+    values (p_actor, 'admin_permissions_updated', 'admin', target_user_id::text, btrim(p_reason),
+            jsonb_build_object('email', target_email, 'previous_permissions', prior_permissions, 'permissions', p_permissions));
+    return jsonb_build_object('user_id', target_user_id, 'email', target_email, 'role', 'admin', 'permissions', p_permissions);
+  end if;
+
+  delete from public.platform_admins where user_id = target_user_id and role = 'admin';
+  insert into public.admin_audit_log(actor_id, action, target_type, target_id, reason, details)
+  values (p_actor, 'admin_removed', 'admin', target_user_id::text, btrim(p_reason),
+          jsonb_build_object('email', target_email, 'previous_permissions', prior_permissions));
+  return jsonb_build_object('user_id', target_user_id, 'email', target_email, 'removed', true);
+end;
+$$;
+
+revoke all on function public.admin_list_memberships(uuid) from public, anon, authenticated;
+revoke all on function public.admin_manage_membership(uuid, text, text, text[], text) from public, anon, authenticated;
+grant execute on function public.admin_list_memberships(uuid) to service_role;
+grant execute on function public.admin_manage_membership(uuid, text, text, text[], text) to service_role;
+
+-- ============================================================
+-- 20261113000700_document_templates.sql
+-- ============================================================
+-- SellSharp · 0700 · vendor-designed receipts and invoices
+--   * document_templates      the layout a vendor designed (JSON) and the CSS generated from it, one per kind per store
+--   * store_payment_details   bank / account details a vendor wants printed on invoices
+--   * get_invoice()           a live invoice for an order that still has a balance (unpaid or part-paid)
+-- Safe to re-run. Earlier migrations are not touched: receipts keep working exactly as before.
+
+-- ---------------------------------------------------------------- templates (written only by the save-document-template edge function)
+create table if not exists public.document_templates (
+  id         uuid primary key default gen_random_uuid(),
+  store_id   uuid not null references public.stores (id) on delete cascade,
+  kind       text not null check (kind in ('receipt', 'invoice')),
+  layout     jsonb not null,
+  css        text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (store_id, kind),
+  constraint document_templates_layout_shape check (jsonb_typeof(layout) = 'object' and pg_column_size(layout) <= 60000),
+  -- Defence in depth: the edge function generates this CSS itself, and the database still refuses anything that could
+  -- load a resource, start an at-rule or break out of a <style> element.
+  constraint document_templates_css_safe check (
+    char_length(css) between 1 and 60000
+    and css !~* '(@|url[[:space:]]*\(|expression|javascript|behavior|binding|[<>\\])'
+  )
+);
+create index if not exists document_templates_store_idx on public.document_templates (store_id);
+
+drop trigger if exists document_templates_set_updated_at on public.document_templates;
+create trigger document_templates_set_updated_at
+  before update on public.document_templates
+  for each row execute function public.set_updated_at();
+
+-- ---------------------------------------------------------------- bank / payment details shown on invoices
+create table if not exists public.store_payment_details (
+  store_id       uuid primary key references public.stores (id) on delete cascade,
+  bank_name      text check (bank_name is null or (char_length(bank_name) between 1 and 80 and bank_name !~ '[<>]')),
+  account_name   text check (account_name is null or (char_length(account_name) between 1 and 120 and account_name !~ '[<>]')),
+  account_number text check (account_number is null or account_number ~ '^[0-9A-Za-z .-]{4,30}$'),
+  extra_note     text check (extra_note is null or (char_length(extra_note) between 1 and 300 and extra_note !~ '[<>]')),
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+drop trigger if exists store_payment_details_set_updated_at on public.store_payment_details;
+create trigger store_payment_details_set_updated_at
+  before update on public.store_payment_details
+  for each row execute function public.set_updated_at();
+
+-- ---------------------------------------------------------------- row level security (a vendor reads only their own; writes go through edge functions)
+alter table public.document_templates    enable row level security;
+alter table public.store_payment_details enable row level security;
+
+drop policy if exists "document_templates: owner reads own" on public.document_templates;
+create policy "document_templates: owner reads own" on public.document_templates
+  for select to authenticated
+  using (exists (select 1 from public.stores s where s.id = store_id and s.owner_id = (select auth.uid())));
+
+drop policy if exists "store_payment_details: owner reads own" on public.store_payment_details;
+create policy "store_payment_details: owner reads own" on public.store_payment_details
+  for select to authenticated
+  using (exists (select 1 from public.stores s where s.id = store_id and s.owner_id = (select auth.uid())));
+
+revoke all on public.document_templates, public.store_payment_details from anon, authenticated;
+grant select on public.document_templates, public.store_payment_details to authenticated;
+
+-- ---------------------------------------------------------------- vendor: live invoice for an order that still has a balance
+-- Nothing is stored: the invoice number is the order reference with an INV- prefix, and the figures are read from the
+-- order when it is opened, so it always shows what is still owed. Paid and cancelled orders have no invoice.
+create or replace function public.get_invoice(p_store_id uuid, p_order_id uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  o  public.orders;
+  s  public.stores;
+  c  public.customers;
+  pd public.store_payment_details;
+begin
+  select * into o from public.orders where id = p_order_id and store_id = p_store_id;
+  if not found then
+    raise exception 'order_not_found';
+  end if;
+  if o.status = 'cancelled' then
+    raise exception 'order_cancelled';
+  end if;
+  if o.payment_status = 'paid' then
+    raise exception 'order_paid';
+  end if;
+
+  select * into s  from public.stores  where id = p_store_id;
+  select * into c  from public.customers where id = o.customer_id;
+  select * into pd from public.store_payment_details where store_id = p_store_id;
+
+  return jsonb_build_object(
+    'invoice_no', 'INV-' || o.reference,
+    'issued_at', now(),
+    'bank', case when pd.store_id is null then null else jsonb_build_object(
+              'bank_name', pd.bank_name, 'account_name', pd.account_name,
+              'account_number', pd.account_number, 'extra_note', pd.extra_note) end,
+    'snapshot', jsonb_build_object(
+      'business', jsonb_build_object('name', s.name, 'logo_url', s.logo_url, 'phone', s.contact_phone,
+                                     'email', s.contact_email, 'city', s.city, 'state', s.state, 'slug', s.slug),
+      'customer', jsonb_build_object('name', c.name, 'phone', c.phone, 'email', c.email, 'address', c.address),
+      'order', jsonb_build_object('reference', o.reference, 'channel', o.channel, 'status', o.status, 'created_at', o.created_at),
+      'items', coalesce((select jsonb_agg(jsonb_build_object(
+                  'name', i.product_name, 'variant', i.variant, 'quantity', i.quantity,
+                  'unit_price_kobo', i.unit_price_kobo, 'line_total_kobo', i.line_total_kobo) order by i.line_total_kobo desc, i.id)
+                from public.order_items i where i.order_id = o.id), '[]'::jsonb),
+      'totals', jsonb_build_object('total_kobo', o.total_kobo, 'paid_kobo', o.paid_kobo,
+                                   'outstanding_kobo', o.total_kobo - o.paid_kobo, 'payment_status', o.payment_status),
+      'payments', coalesce((select jsonb_agg(jsonb_build_object(
+                  'amount_kobo', p.amount_kobo, 'method', p.method, 'source', p.source, 'recorded_at', p.recorded_at)
+                  order by p.recorded_at, p.id)
+                from public.order_payments p where p.order_id = o.id), '[]'::jsonb),
+      'issued_at', now()
+    )
+  );
+end;
+$$;
+
+-- Only the service role (edge functions) may call it, same as the other sales functions.
+revoke all on function public.get_invoice(uuid, uuid) from public, anon, authenticated;
+grant execute on function public.get_invoice(uuid, uuid) to service_role;

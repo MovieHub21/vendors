@@ -5,9 +5,13 @@ import { Seo } from "../components/Seo";
 import { PAGE_META } from "../data/pageMeta";
 import { breadcrumbJsonLd } from "../lib/seo";
 import { crumbs } from "../lib/crumbs";
+import { submitSupportRequest } from "../services/api";
 
 export default function Contact() {
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ name: "", email: "", topic: "", message: "" });
   return (
     <>
       <Seo seo={{ ...PAGE_META.contact, jsonLd: [breadcrumbJsonLd(crumbs(PAGE_META.contact))] }} />
@@ -28,7 +32,7 @@ export default function Contact() {
             <span className="eyebrow">GET IN TOUCH</span>
             <h2>We're listening.</h2>
             <p>
-              Send us a message and tell us what you need help with. This contact form is currently a frontend preview.
+              Send us a message and tell us what you need help with. Your request will go to the SellSharp support inbox.
             </p>
             <div className="contact-method">
               <span>
@@ -51,23 +55,28 @@ export default function Contact() {
           </div>
           <form
             className="contact-form"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              setSent(true);
+              setBusy(true);
+              setError("");
+              const result = await submitSupportRequest(form);
+              setBusy(false);
+              if (result.ok) setSent(true);
+              else setError(result.message);
             }}
           >
             <h3>Send a message</h3>
             <label>
               Your name
-              <input required placeholder="e.g. Amara Okafor" />
+              <input required maxLength={120} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Amara Okafor" />
             </label>
             <label>
               Email address
-              <input required type="email" placeholder="you@example.com" />
+              <input required maxLength={254} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" />
             </label>
             <label>
               What can we help with?
-              <select defaultValue="">
+              <select required value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })}>
                 <option value="" disabled>
                   Select a topic
                 </option>
@@ -79,14 +88,15 @@ export default function Contact() {
             </label>
             <label>
               Message
-              <textarea required rows={4} placeholder="Tell us a little about what you need..." />
+              <textarea required minLength={5} maxLength={5000} rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Tell us a little about what you need..." />
             </label>
-            <button className="btn btn-primary btn-full" type="submit">
-              {sent ? "Message noted in preview" : "Send message"} <ArrowRight size={16} />
+            <button className="btn btn-primary btn-full" type="submit" disabled={busy || sent}>
+              {sent ? "Message sent" : busy ? "Sending…" : "Send message"} <ArrowRight size={16} />
             </button>
+            {error && <p className="admin-error" role="alert">{error}</p>}
             {sent && (
               <p className="form-success">
-                <CheckCircle2 size={15} /> This is a frontend demo. Message delivery will be connected later.
+                <CheckCircle2 size={15} /> Your message is in our support inbox. We’ll follow up by email.
               </p>
             )}
           </form>

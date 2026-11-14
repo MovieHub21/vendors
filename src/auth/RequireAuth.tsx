@@ -14,10 +14,13 @@ export function RequireAuth({ children }: { children: ReactNode }) {
         : location.pathname.startsWith("/dashboard/products") ? "Products"
           : location.pathname.startsWith("/dashboard/customers") ? "Customers"
             : location.pathname.startsWith("/dashboard/receipts") || location.pathname.startsWith("/dashboard/receipt/") ? "Receipts"
+              : location.pathname.startsWith("/dashboard/invoice/") ? "Invoice"
+                : location.pathname === "/dashboard/templates" ? "Receipt & invoice design"
               : location.pathname === "/dashboard/design" ? "Store design"
                 : location.pathname === "/dashboard/seo" ? "Store SEO"
                     : location.pathname === "/dashboard/sale" ? "Record a sale"
                       : location.pathname === "/dashboard/export" ? "Export business data"
+                        : location.pathname === "/dashboard/support" ? "Contact support"
                     : "Overview";
       return <VendorPageLoading title={title} path={location.pathname} />;
     }

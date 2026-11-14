@@ -139,6 +139,9 @@ export type PaymentStatus = "success" | "pending" | "failed";
 
 const MESSAGES: Record<string, string> = {
   unauthorized: "Your session has expired. Please log in again.",
+  admin_required: "This account does not have platform admin access.",
+  invalid_admin_action: "Please check the admin action and its reason.",
+  support_submit_failed: "We couldn't send your message. Please try again.",
   slug_taken: SLUG_MESSAGES.taken,
   store_exists: "You already have a store.",
   store_required: "Create your store first.",
@@ -157,6 +160,9 @@ const MESSAGES: Record<string, string> = {
   customer_not_found: "That customer wasn't found.",
   order_not_found: "That order wasn't found.",
   order_cancelled: "This order is cancelled.",
+  order_paid: "This order is fully paid, so it has no invoice. Open its receipt instead.",
+  invalid_template: "Something in the design isn't allowed. Check your colours and image links.",
+  invalid_payment_details: "Please check the account details.",
   invalid_transition: "That status change isn't allowed.",
   overpayment: "That is more than the customer still owes.",
   invalid_payment: "Please check the payment details.",
@@ -189,7 +195,9 @@ export async function call<T>(name: string, body?: Record<string, unknown>): Pro
   const message =
     code === "invalid_slug"
       ? (SLUG_MESSAGES[detail] ?? SLUG_MESSAGES.invalid_characters)
-      : (MESSAGES[code] ?? "Something went wrong. Please try again.");
+      : (code === "invalid_template" || code === "invalid_payment_details") && detail
+        ? detail
+        : (MESSAGES[code] ?? "Something went wrong. Please try again.");
   return fail(code, message);
 }
 
@@ -205,3 +213,12 @@ export const updateStoreSeo = (input: StoreSeoInput) =>
 
 export const verifyPayment = (reference: string) =>
   call<{ status: PaymentStatus }>("subscription-verify", { reference });
+
+export const adminCall = <T>(action: string, body: Record<string, unknown> = {}) =>
+  call<T>("admin-console", { action, ...body });
+
+export const submitSupportRequest = (input: {
+  name: string; email: string; topic: string; message: string; phone?: string;
+  request_type?: "general" | "store_report" | "vendor_complaint"; store_slug?: string;
+}) =>
+  call<{ request_id: string }>("support-request", input);

@@ -14,16 +14,16 @@ export const PAGE_META = {
     path: "/",
   },
   features: {
-    title: "Store, Orders, Receipts & Debt Tracker",
+    title: "Store, Orders, Receipts, Invoices & Debts",
     description:
-      "See what SellSharp does: your own storefront link, order management, customer records, receipts, debt tracking and a simple sales overview.",
+      "See what SellSharp does: your own storefront link, orders, customer records, custom receipts and invoices, debt tracking and a sales overview.",
     path: "/features",
     crumb: "Features",
   },
   pricing: {
     title: "Pricing: ₦3,000/month, Everything Included",
     description:
-      "One simple SellSharp plan at ₦3,000 per month: storefront, orders, customer records, receipts, debt tracking and WhatsApp sharing tools.",
+      "One simple SellSharp plan at ₦3,000 per month: storefront, orders, customer records, receipts, invoices, debt tracking and WhatsApp sharing.",
     path: "/pricing",
     crumb: "Pricing",
   },
@@ -40,6 +40,12 @@ export const PAGE_META = {
       "Questions about setting up your store, pricing or payments? Send the SellSharp team a message and tell us what you need help with.",
     path: "/contact",
     crumb: "Contact",
+  },
+  vendorSupport: {
+    title: "Contact SellSharp Support",
+    description: "Contact the SellSharp team about your vendor account, storefront, subscription, or an issue with your business tools.",
+    path: "/dashboard/support",
+    crumb: "Support",
   },
   about: {
     title: "About us",
@@ -138,6 +144,16 @@ export const PAGE_META = {
     description: "Preview, print or share a customer receipt from your SellSharp dashboard. Updated receipts keep the original history.",
     path: "/dashboard/receipt",
 
+  },
+  dashboardInvoice: {
+    title: "Invoice",
+    description: "Create, download and share an invoice with your account details for a customer order that still has a balance to pay.",
+    path: "/dashboard/invoice",
+  },
+  dashboardTemplates: {
+    title: "Receipt and invoice design",
+    description: "Design your own receipts and invoices in SellSharp: drag blocks, pick colours and add the account details customers should pay into.",
+    path: "/dashboard/templates",
   },
   dashboardReceipts: {
     title: "Receipts",

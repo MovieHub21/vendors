@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { FileDown, LayoutDashboard, LayoutTemplate, LogOut, Menu, Package, Plus, Receipt, Search, ShoppingBag, Store, Users, Wallet, ClipboardList, X, type LucideIcon } from "lucide-react";
+import { FileDown, LayoutDashboard, LayoutTemplate, LogOut, Menu, Package, Plus, Receipt, Search, ShoppingBag, Store, Users, Wallet, ClipboardList, MessageCircle, Palette, X, type LucideIcon } from "lucide-react";
 import { Alert } from "./AuthLayout";
 import { Seo } from "./Seo";
 import type { PageSeo } from "../lib/seo";
@@ -19,7 +19,7 @@ function SkeletonPulse({ className = "", style }: { className?: string; style?: 
 export function VendorPageLoading({ title, path }: { title: string; path: string }) {
   const overview = path === "/dashboard";
   const products = path === "/dashboard/products";
-  const formPage = path === "/dashboard/design" || path === "/dashboard/seo";
+  const formPage = path === "/dashboard/design" || path === "/dashboard/seo" || path === "/dashboard/templates";
   return (
     <section className="vendor-app vendor-app-loading" role="status" aria-label={`Loading ${title.toLowerCase()}`}>
       <span className="sr-only">Loading {title.toLowerCase()}…</span>
@@ -49,6 +49,7 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: Luc
       { to: "/dashboard/customers?owing=1", label: "Debts", icon: Wallet, search: "owing=1" },
       { to: "/dashboard/receipts", label: "Receipts", icon: Receipt },
       { to: "/dashboard/export", label: "Export data", icon: FileDown },
+      { to: "/dashboard/support", label: "Contact support", icon: MessageCircle },
     ],
   },
   {
@@ -56,6 +57,7 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: Luc
     items: [
       { to: "store", label: "My storefront", icon: Store },
       { to: "/dashboard/design", label: "Store design", icon: LayoutTemplate },
+      { to: "/dashboard/templates", label: "Receipt & invoice design", icon: Palette },
       { to: "/dashboard/seo", label: "Store SEO", icon: Search },
     ],
   },
@@ -66,11 +68,13 @@ export function DashboardShell({
   seo,
   title,
   actions,
+  allowIncomplete = false,
   children,
 }: {
   seo: PageSeo;
   title: string;
   actions?: ReactNode;
+  allowIncomplete?: boolean;
   children: (me: Me) => ReactNode;
 }) {
   const { me, error } = useVendor();
@@ -89,7 +93,7 @@ export function DashboardShell({
       window.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);
-  if (me && me.next_step !== "done") return <Navigate to="/onboarding" replace />;
+  if (me && me.next_step !== "done" && !allowIncomplete) return <Navigate to="/onboarding" replace />;
   const name = me?.profile?.full_name?.trim() || me?.user.email || "Vendor";
   const initials = name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("") || "V";
   const storeIsLive = Boolean(me?.store?.is_published && me.store.status === "active");
@@ -145,7 +149,8 @@ export function DashboardShell({
                     const itemPath = item.to.split("?")[0];
                     const active =
                       (location.pathname === itemPath ||
-                        (item.label === "Receipts" && location.pathname.startsWith("/dashboard/receipt/"))) &&
+                        (item.label === "Receipts" && location.pathname.startsWith("/dashboard/receipt/")) ||
+                        (item.label === "Orders" && location.pathname.startsWith("/dashboard/invoice/"))) &&
                       (item.search ? location.search.includes(item.search) : item.to !== "/dashboard/customers" || !location.search.includes("owing=1"));
                     return (
                       <Link key={item.label} to={item.to} aria-current={active ? "page" : undefined} className={`vendor-nav-link${active ? " active" : ""}`}>

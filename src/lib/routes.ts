@@ -18,6 +18,8 @@ export const NOINDEX_ROUTES = [
   "/signup",
   "/forgot-password",
   "/reset-password",
+  "/management",
+  "/admin",
   "/onboarding",
   "/onboarding/payment",
 
@@ -27,14 +29,17 @@ export const NOINDEX_ROUTES = [
   "/dashboard/orders",
   "/dashboard/customers",
   "/dashboard/products",
+  "/dashboard/support",
   "/dashboard/receipt",
+  "/dashboard/invoice",
+  "/dashboard/templates",
 ] as const;
 
 /** Old or alternate URLs that redirect somewhere else. */
 export const REDIRECT_ROUTES = { "/register": "/signup", "/app": "/dashboard" } as const;
 
 /** Pages the browser app renders on its own (they need a login, so there is nothing for a crawler to read). */
-export const CLIENT_ONLY_PREFIXES = ["/onboarding", "/dashboard", "/reset-password"] as const;
+export const CLIENT_ONLY_PREFIXES = ["/onboarding", "/dashboard", "/reset-password", "/management"] as const;
 
 
 export const ALL_STATIC_ROUTES: readonly string[] = [

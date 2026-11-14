@@ -61,7 +61,7 @@ export function DashboardPreview() {
             <Wallet size={14} /> Debts
           </div>
           <div className="side-item">
-            <FileText size={14} /> Receipts
+            <FileText size={14} /> Receipts &amp; invoices
           </div>
           <span className="side-label side-label-bottom">STORE</span>
           <div className="side-item">

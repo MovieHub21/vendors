@@ -1,0 +1,65 @@
+/* Receipt & invoice designer, and the frame that shows a finished receipt or invoice. Tokens only, so both themes work.
+   The paper itself is always drawn by the vendor's own stored CSS (scope .doc-tpl), never by these rules. */
+
+.doc-page { max-width: 794px; margin: 0 auto; }
+.doc-frame { position: relative; width: 100%; max-width: 794px; margin: 0 auto; overflow: hidden; border: 1px solid var(--color-line); border-radius: 4px; background: #fff; box-shadow: 0 18px 50px rgb(23 35 55 / 10%); }
+.doc-scaler { transform-origin: 0 0; }
+.doc-design-link { margin-top: 14px; text-align: center; font-size: 13px; }
+.doc-hint { display: flex; align-items: center; justify-content: center; height: 100%; border: 1px dashed #c8d0dc; color: #8a95a6; font-size: 12px; }
+
+.doc-editing .b { cursor: move; user-select: none; touch-action: none; }
+.doc-sel { position: absolute; outline: 2px solid var(--color-accent); pointer-events: none; }
+.doc-handle { position: absolute; width: 14px; height: 14px; border: 2px solid var(--color-accent); border-radius: 4px; background: #fff; pointer-events: auto; touch-action: none; }
+
+.designer { display: grid; gap: 14px; }
+.dz-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.dz-tabs { display: inline-flex; overflow: hidden; border: 1px solid var(--color-line); border-radius: 10px; }
+.dz-tab { padding: 9px 20px; border: 0; background: var(--color-page); color: var(--color-muted); font: inherit; font-weight: 700; cursor: pointer; }
+.dz-tab.on { background: var(--color-brand); color: #fff; }
+.dz-tab i { display: inline-block; width: 8px; height: 8px; margin-left: 8px; border-radius: 50%; background: #e5a823; }
+.dz-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dz-hint { margin: 0; font-size: 13px; line-height: 1.55; }
+
+.dz-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr) 290px; gap: 16px; align-items: start; }
+.dz-palette, .dz-inspector { position: sticky; top: 84px; max-height: calc(100vh - 100px); overflow: auto; }
+.dz-palette h3, .dz-inspector h3 { margin: 0 0 10px; font-size: 14px; }
+.dz-inspector h4 { margin: 16px 0 8px; color: var(--color-muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.dz-stage { min-width: 0; padding: 18px; overflow: hidden; border-radius: 14px; background: var(--color-band); }
+
+.dz-add { display: grid; gap: 6px; margin-bottom: 16px; }
+.dz-add-btn { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--color-line); border-radius: 8px; background: var(--color-page); color: var(--color-ink); font: inherit; font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; }
+.dz-add-btn:hover { border-color: var(--color-accent); }
+.dz-layers { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.dz-layers button { width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--color-ink); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+.dz-layers button.on { background: var(--color-band); font-weight: 700; }
+
+.dz-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; color: var(--color-muted); font-size: 12px; font-weight: 700; }
+.dz-field small { font-weight: 500; }
+.dz-field input, .dz-field select, .dz-field textarea { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--color-line); border-radius: 8px; background: var(--color-page); color: var(--color-ink); font: inherit; font-size: 13px; font-weight: 500; }
+.dz-color > div { display: flex; align-items: center; gap: 8px; }
+.dz-color input[type="color"] { width: 44px; height: 30px; padding: 0; border: 1px solid var(--color-line); border-radius: 6px; background: none; cursor: pointer; }
+.dz-color input.is-none { opacity: .35; }
+.dz-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dz-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.dz-row .btn { padding: 7px 10px; }
+.dz-on { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+.dz-danger { color: #c0392b; }
+.dz-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.dz-chip { padding: 4px 9px; border: 1px solid var(--color-line); border-radius: 99px; background: var(--color-page); color: var(--color-ink); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.dz-chip.on { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+
+.dz-payment h2 { margin: 0 0 6px; font-size: 17px; }
+.dz-payment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 12px; margin-top: 12px; }
+.dz-wide { grid-column: 1 / -1; }
+
+@media (max-width: 1100px) {
+  .dz-layout { grid-template-columns: minmax(0, 1fr); }
+  .dz-palette, .dz-inspector { position: static; max-height: none; }
+  .dz-add { display: flex; flex-wrap: wrap; }
+  .dz-stage { padding: 10px; }
+}
+
+@media print {
+  .doc-frame { border: 0; box-shadow: none; }
+  .doc-design-link { display: none; }
+}

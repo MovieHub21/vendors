@@ -35,7 +35,12 @@ function ReceiptsView() {
               <td>{dateTime(order.created_at)}</td>
               <td>{formatNaira(order.total_kobo)}</td>
               <td><PayBadge status={order.payment_status} /></td>
-              <td><Link className="link-btn" to={`/dashboard/receipt/${order.id}`}>View receipt</Link></td>
+              <td>
+                <Link className="link-btn" to={`/dashboard/receipt/${order.id}`}>View receipt</Link>
+                {order.payment_status !== "paid" && order.status !== "cancelled" && (
+                  <> · <Link className="link-btn" to={`/dashboard/invoice/${order.id}`}>Invoice</Link></>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

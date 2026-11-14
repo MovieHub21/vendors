@@ -9,3 +9,6 @@ verify_jwt = false
 # It is safe because it accepts no prices or payment status: the database prices the order and creates it as pending.
 [functions.place-order]
 verify_jwt = false
+# Public help form accepts signed-out visitors. The function validates and stores the request server-side.
+[functions.support-request]
+verify_jwt = false

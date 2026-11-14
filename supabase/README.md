@@ -99,5 +99,8 @@ Deploy with `supabase functions deploy <name>`. All need a login except `place-o
 | `update-order-status` | Vendor: move an order along; stock follows the status |
 | `record-payment` | Vendor: manual payment against an order (cannot exceed the balance) |
 | `order-receipt` | Vendor: create or re-issue a receipt |
+| `order-invoice` | Vendor: live invoice for an unpaid or part-paid order (migration 0700) |
+| `save-document-template` | Vendor: save or reset a receipt / invoice design. The CSS is generated server-side from the validated blocks (migration 0700) |
+| `save-payment-details` | Vendor: bank / account details printed on invoices (migration 0700) |
 | `dashboard-summary` | Vendor: dashboard figures, computed in Postgres |
 | `save-product`, `product-action` | Vendor: add/edit products; duplicate, hide/show, delete |

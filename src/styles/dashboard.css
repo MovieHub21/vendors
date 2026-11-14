@@ -406,6 +406,32 @@ a.stat-tile:hover { border-color: var(--color-accent); }
 .business-export-card > ul { display: grid; gap: 7px; margin: 20px 0; padding-left: 21px; color: var(--color-muted); font-size: 13px; }
 .business-export-note { margin: 14px 0 0; font-size: 12px; }
 
+.vendor-support-intro { max-width: 800px; }
+.vendor-support-intro h2 { margin: 0 0 8px; font: 750 20px var(--font-display); }
+.vendor-support-intro > p:not(.vendor-page-eyebrow), .vendor-support-success > p { max-width: 650px; color: var(--color-muted); font-size: 13px; line-height: 1.65; }
+.vendor-support-intro > small { display: block; margin-top: 13px; color: var(--color-muted); font-size: 12px; }
+.vendor-support-form { max-width: 800px; }
+.vendor-support-form-heading { margin-bottom: 18px; }
+.vendor-support-form-heading h2, .vendor-support-success h2 { margin: 0 0 5px; font: 750 19px var(--font-display); }
+.vendor-support-form-heading p { margin: 0; color: var(--color-muted); font-size: 12px; }
+.vendor-support-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.vendor-support-fields .field { min-width: 0; }
+.vendor-support-fields .field > span { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
+.vendor-support-fields select, .vendor-support-fields textarea { width: 100%; padding: 11px 13px; border: 1px solid var(--color-line); border-radius: 10px; color: var(--color-ink); background: var(--color-page); font: 15px var(--font-body); }
+.vendor-support-fields select { min-height: 46px; }
+.vendor-support-fields textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
+.vendor-support-message { grid-column: 1 / -1; }
+.vendor-support-form > .auth-alert { margin: 0 0 14px; }
+.vendor-support-success { max-width: 800px; }
+@media (max-width: 640px) {
+  .sf-report-backdrop { align-items: end; padding: 0; }
+  .sf-report-dialog { width: 100%; max-height: 94dvh; padding: 20px 16px calc(18px + env(safe-area-inset-bottom)); border-radius: 17px 17px 0 0; }
+  .sf-footer-inner .sf-report-trigger { grid-column: 1 / -1; justify-self: center; padding: 4px 0; }
+  .vendor-support-fields { grid-template-columns: 1fr; }
+  .vendor-support-message { grid-column: auto; }
+  .vendor-support-fields select, .vendor-support-fields textarea { font-size: 16px; }
+}
+
 /* Menu button + drawer chrome (hidden on desktop, where the sidebar is always visible). */
 .vendor-topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .vendor-menu-btn { display: none; place-items: center; width: 44px; height: 44px; margin-left: -8px; border: 0; border-radius: 12px; background: transparent; color: var(--color-ink); cursor: pointer; }
