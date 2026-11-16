@@ -13,8 +13,7 @@ import { useCart } from "../storefront/CartContext";
 const FORM_ID = "cart-checkout-form";
 
 /**
- * Cart + guest checkout. On phones it is a bottom sheet: items, then a short form, with the total and the order
- * button pinned to the bottom so the thumb never has to hunt for it. On larger screens it is a right-hand drawer.
+ * Cart + guest checkout. It slides in from the right with the total and order button pinned to the bottom.
  */
 export function CartDrawer({ store }: { store: VendorStore }) {
   const cart = useCart();

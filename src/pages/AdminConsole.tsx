@@ -38,8 +38,7 @@ const ADMIN_PERMISSION_OPTIONS: { id: AdminPage; label: string; description: str
 ];
 const date = (value?: string | null) => value ? new Date(value).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—";
 const money = (kobo: number, currency = "NGN") => new Intl.NumberFormat("en-NG", { style: "currency", currency, maximumFractionDigits: 0 }).format(kobo / 100);
-const title = (value: string): string =>
-  value.replace(/_/g, " ").replace(/\b\w/g, (letter: string) => letter.toUpperCase());
+const title = (value: string) => value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 export default function AdminConsole() {
   const [tab, setTab] = useState<Tab>("overview");

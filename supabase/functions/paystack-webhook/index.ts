@@ -1,9 +1,12 @@
 // POST /functions/v1/paystack-webhook — called by Paystack, not by browsers (verify_jwt = false in config.toml).
-// Security: (1) HMAC signature on the raw body, (2) the payment is re-verified with Paystack's API,
-// (3) Postgres re-checks the amount against the stored payment and plan price, (4) every delivery is logged once.
-import { HttpError, json } from "../_shared/http.ts";
+// Security: (1) HMAC signature on the raw body, (2) successful charges are re-verified with Paystack's API,
+// (3) Postgres re-checks the amount against the plan price, (4) every delivery is logged, (5) every handler is idempotent.
+//
+// In Paystack → Settings → API Keys & Webhooks, this URL receives all events. The ones that matter:
+//   charge.success · invoice.payment_failed · subscription.create · subscription.not_renew · subscription.disable
+import { handlePaystackEvent, billingDeps } from "../_shared/confirm.ts";
+import { json } from "../_shared/http.ts";
 import { verifyPaystackSignature } from "../_shared/paystack.ts";
-import { confirmReference } from "../_shared/confirm.ts";
 import { adminClient, env } from "../_shared/runtime.ts";
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -20,34 +23,31 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: "invalid_json" }, 400);
   }
 
-  const reference = event.data?.reference ?? null;
   const db = adminClient();
-  await db
-    .from("webhook_events")
-    .upsert(
-      { provider: "paystack", event: event.event ?? "unknown", reference, payload: event },
-      { onConflict: "provider,event,reference", ignoreDuplicates: true },
-    );
+  const reference = typeof event.data?.reference === "string" ? event.data.reference : null;
 
-  // Only successful charges change anything. Everything else is acknowledged so Paystack stops retrying.
-  if (event.event === "charge.success" && reference) {
-    try {
-      await confirmReference(reference);
-    } catch (e) {
-      // A payment we never created (e.g. another product on the same Paystack account): acknowledge and move on.
-      if (e instanceof HttpError && (e.code === "payment_not_found" || e.code === "payment_mismatch")) {
-        console.warn("paystack webhook ignored", reference, e.code);
-        return json({ received: true, ignored: e.code });
-      }
-      console.error("paystack webhook failed", e);
-      return json({ error: "processing_failed" }, 500); // non-2xx → Paystack retries
-    }
-    await db
-      .from("webhook_events")
-      .update({ processed_at: new Date().toISOString() })
-      .eq("provider", "paystack")
-      .eq("event", "charge.success")
-      .eq("reference", reference);
+  // Log the delivery. A repeat delivery (Paystack retries) finds the existing row and reuses it.
+  let logId: string | null = null;
+  const inserted = await db
+    .from("webhook_events")
+    .insert({ provider: "paystack", event: event.event ?? "unknown", reference, payload: event })
+    .select("id")
+    .single();
+  if (inserted.data) logId = inserted.data.id as string;
+  else if (reference) {
+    const existing = await db.from("webhook_events").select("id").eq("provider", "paystack").eq("event", event.event ?? "unknown").eq("reference", reference).maybeSingle();
+    logId = (existing.data?.id as string | undefined) ?? null;
   }
-  return json({ received: true });
+
+  try {
+    const result = await handlePaystackEvent(event, billingDeps());
+    if (result.outcome === "ignored") console.warn("paystack webhook ignored", event.event, reference, result.detail);
+    if (logId && result.outcome === "processed") {
+      await db.from("webhook_events").update({ processed_at: new Date().toISOString() }).eq("id", logId);
+    }
+    return json({ received: true, ...(result.outcome === "ignored" ? { ignored: result.detail } : {}) });
+  } catch (e) {
+    console.error("paystack webhook failed", event.event, reference, e);
+    return json({ error: "processing_failed" }, 500); // non-2xx → Paystack retries later
+  }
 });

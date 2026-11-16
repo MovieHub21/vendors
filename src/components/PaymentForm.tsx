@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Alert } from "./AuthLayout";
 import { formatNaira } from "../lib/money";
 import { PAYMENT_METHODS, koboToInput, nairaToKobo, type PaymentMethod } from "../lib/sales";
@@ -20,6 +20,8 @@ export function PaymentForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => setAmount(koboToInput(outstandingKobo)), [outstandingKobo]);
+
   async function submit(e: FormEvent) {
     e.preventDefault();
     const kobo = nairaToKobo(amount);
@@ -36,7 +38,7 @@ export function PaymentForm({
   return (
     <form className="pay-form" onSubmit={submit}>
       <h3>Record amount received</h3>
-      <p className="muted">Enter what the customer actually paid, including an agreed negotiated amount. Remaining balance: {formatNaira(outstandingKobo)}.</p>
+      <p className="muted">Enter the amount the customer has paid so far. The remaining balance stays on this order as debt: {formatNaira(outstandingKobo)}.</p>
       <div className="field-row">
         <div className="field">
           <label htmlFor={`amt-${orderId}`}>Amount received (₦)</label>

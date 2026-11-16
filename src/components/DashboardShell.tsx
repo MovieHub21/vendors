@@ -5,6 +5,7 @@ import { Alert } from "./AuthLayout";
 import { Seo } from "./Seo";
 import type { PageSeo } from "../lib/seo";
 import { useVendor } from "../hooks/useVendor";
+import { BillingBanner } from "./BillingBanner";
 import type { Me } from "../services/api";
 import { signOut } from "../services/auth";
 import { ORDER_STATUSES, PAYMENT_STATUS_LABEL, type PaymentStatus } from "../lib/sales";
@@ -93,7 +94,10 @@ export function DashboardShell({
       window.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);
-  if (me && me.next_step !== "done" && !allowIncomplete) return <Navigate to="/onboarding" replace />;
+  // A vendor who has paid before but whose subscription has ended stays on the dashboard: they must be able to see
+  // their records and the "renewal failed / renew now" notice. Only people who never subscribed are sent to onboarding.
+  const lapsed = Boolean(me?.store && me.subscription && me.next_step === "subscribe");
+  if (me && me.next_step !== "done" && !lapsed && !allowIncomplete) return <Navigate to="/onboarding" replace />;
   const name = me?.profile?.full_name?.trim() || me?.user.email || "Vendor";
   const initials = name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("") || "V";
   const storeIsLive = Boolean(me?.store?.is_published && me.store.status === "active");
@@ -190,6 +194,7 @@ export function DashboardShell({
               Loading…
             </p>
           )}
+          {me && <BillingBanner me={me} />}
           {me && children(me)}
             </div>
           </main>

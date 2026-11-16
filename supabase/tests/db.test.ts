@@ -19,6 +19,10 @@ const migrations = files.map((f) => fs.readFileSync(path.join(dir, f), "utf8"));
 
 const BEFORE_MIGRATIONS = `
   create schema auth;
+  create schema storage;
+  create table storage.buckets (id text primary key, name text, public boolean default false, file_size_limit bigint, allowed_mime_types text[]);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
+  alter table storage.objects enable row level security;
   create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb not null default '{}');
   create function auth.uid() returns uuid language sql stable
     as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
@@ -204,11 +208,11 @@ describe("billing", () => {
     expect((await apply("ref_1")).rows[0].r.already_applied).toBe(false);
     await reset();
 
-    const sub = await db.query<{ status: string; days: number }>(
-      `select status, round(extract(epoch from (current_period_end - now())) / 86400)::int as days from public.subscriptions where owner_id = $1`,
+    const sub = await db.query<{ status: string; one_month: boolean }>(
+      `select status, abs(extract(epoch from (current_period_end - (now() + interval '1 month')))) < 60 as one_month from public.subscriptions where owner_id = $1`,
       [ids.a],
     );
-    expect(sub.rows[0]).toEqual({ status: "active", days: 30 });
+    expect(sub.rows[0]).toEqual({ status: "active", one_month: true }); // one calendar month, not a fixed 30 days
     expect(
       (await db.query<{ is_published: boolean }>(`select is_published from public.stores where owner_id = $1`, [ids.a]))
         .rows[0].is_published,
@@ -223,11 +227,11 @@ describe("billing", () => {
     await asService();
     expect((await apply("ref_1")).rows[0].r.already_applied).toBe(true);
     await reset();
-    const { rows } = await db.query<{ days: number }>(
-      `select round(extract(epoch from (current_period_end - now())) / 86400)::int as days from public.subscriptions where owner_id = $1`,
+    const { rows } = await db.query<{ ok: boolean }>(
+      `select abs(extract(epoch from (current_period_end - (now() + interval '1 month')))) < 60 as ok from public.subscriptions where owner_id = $1`,
       [ids.a],
     );
-    expect(rows[0].days).toBe(30);
+    expect(rows[0].ok).toBe(true);
   });
 
   it("extends from the end of the current period when renewing early", async () => {
@@ -235,11 +239,11 @@ describe("billing", () => {
     await newPayment("ref_2");
     await apply("ref_2");
     await reset();
-    const { rows } = await db.query<{ days: number }>(
-      `select round(extract(epoch from (current_period_end - now())) / 86400)::int as days from public.subscriptions where owner_id = $1`,
+    const { rows } = await db.query<{ ok: boolean }>(
+      `select abs(extract(epoch from (current_period_end - ((now() + interval '1 month') + interval '1 month')))) < 60 as ok from public.subscriptions where owner_id = $1`,
       [ids.a],
     );
-    expect(rows[0].days).toBe(60);
+    expect(rows[0].ok).toBe(true);
   });
 
   it("refuses a payment whose amount, currency or reference does not match", async () => {
@@ -305,12 +309,12 @@ describe("billing", () => {
     await newPayment("ref_4");
     await apply("ref_4");
     await reset();
-    const { rows } = await db.query<{ status: string; live: boolean; days: number }>(
-      `select s.status, st.is_published as live, round(extract(epoch from (s.current_period_end - now())) / 86400)::int as days
+    const { rows } = await db.query<{ status: string; live: boolean; one_month: boolean }>(
+      `select s.status, st.is_published as live, abs(extract(epoch from (s.current_period_end - (now() + interval '1 month')))) < 60 as one_month
          from public.subscriptions s join public.stores st on st.owner_id = s.owner_id where s.owner_id = $1`,
       [ids.a],
     );
-    expect(rows[0]).toEqual({ status: "active", live: true, days: 30 });
+    expect(rows[0]).toEqual({ status: "active", live: true, one_month: true });
   });
 });
 

@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FileText, MessageCircle, Receipt } from "lucide-react";
+import { FileText, MessageCircle, Receipt, X } from "lucide-react";
 import { Alert } from "../components/AuthLayout";
 import { DashboardShell, dateTime, PayBadge, StatusBadge } from "../components/DashboardShell";
 import { PaymentForm } from "../components/PaymentForm";
 import { PAGE_META } from "../data/pageMeta";
 import { formatNaira } from "../lib/money";
-import { channelLabel, methodLabel, ORDER_STATUSES, whatsappLink, type OrderStatus } from "../lib/sales";
-import { updateOrderStatus } from "../services/sales";
+import { channelLabel, koboToInput, methodLabel, nairaToKobo, ORDER_STATUSES, whatsappLink, type OrderStatus } from "../lib/sales";
+import { updateOrderItemPrices, updateOrderStatus } from "../services/sales";
 import { getOrder, listOrders, type OrderDetail, type OrderRow } from "../services/vendorData";
 
 function Detail({ id, storeName, onChanged }: { id: string; storeName: string; onChanged: () => void }) {
@@ -15,11 +15,13 @@ function Detail({ id, storeName, onChanged }: { id: string; storeName: string; o
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [itemPrices, setItemPrices] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     const r = await getOrder(id);
     if (r.ok) {
       setOrder(r.data);
+      setItemPrices(Object.fromEntries(r.data.items.map((item) => [item.id, koboToInput(item.unit_price_kobo)])));
       setError(null);
     } else setError(r.message);
   }, [id]);
@@ -43,11 +45,45 @@ function Detail({ id, storeName, onChanged }: { id: string; storeName: string; o
     onChanged();
   }
 
+  async function saveItemPrices(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!order) return;
+    const prices = order.items.map((item) => ({
+      order_item_id: item.id,
+      unit_price_kobo: nairaToKobo(itemPrices[item.id] ?? koboToInput(item.unit_price_kobo)),
+    }));
+    if (prices.some((item) => item.unit_price_kobo === null)) return setError("Enter a valid agreed price for each item.");
+    const totalKobo = prices.reduce((sum, item, index) => sum + (item.unit_price_kobo ?? 0) * order.items[index].quantity, 0);
+    if (totalKobo < 1) return setError("The agreed order total must be greater than zero.");
+    if (totalKobo < order.paid_kobo) return setError(`The agreed prices can't total less than the ${formatNaira(order.paid_kobo)} already paid.`);
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const result = await updateOrderItemPrices(order.id, prices.map((item) => ({
+      order_item_id: item.order_item_id,
+      unit_price_kobo: item.unit_price_kobo as number,
+    })));
+    setBusy(false);
+    if (!result.ok) return setError(result.message);
+    setNotice("Agreed item prices saved. The order total and balance due have been updated.");
+    await load();
+    onChanged();
+  }
+
   if (error && !order) return <Alert kind="error">{error}</Alert>;
   if (!order) return <p className="auth-loading">Loading order…</p>;
   const outstanding = order.total_kobo - order.paid_kobo;
   const phone = order.customers?.phone;
   const cancelled = order.status === "cancelled";
+  const previewLines = order.items.map((item) => {
+    const unitPrice = nairaToKobo(itemPrices[item.id] ?? koboToInput(item.unit_price_kobo));
+    return { item, unitPrice, lineTotal: unitPrice === null ? null : unitPrice * item.quantity };
+  });
+  const previewTotal = previewLines.some((line) => line.lineTotal === null)
+    ? null
+    : previewLines.reduce((sum, line) => sum + (line.lineTotal ?? 0), 0);
+  const itemPricesChanged = previewLines.some((line) => line.unitPrice !== line.item.unit_price_kobo);
+  const previewBelowPaid = previewTotal !== null && previewTotal < order.paid_kobo;
 
   return (
     <section className="dash-card order-detail" aria-label={`Order ${order.reference}`}>
@@ -65,33 +101,42 @@ function Detail({ id, storeName, onChanged }: { id: string; storeName: string; o
       {error && <Alert kind="error">{error}</Alert>}
       {notice && <Alert kind="success">{notice}</Alert>}
 
-      <table className="dash-table">
-        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
-        <tbody>
-          {order.items.map((i) => (
-            <tr key={i.id}>
-              <td>{i.product_name}{i.variant ? ` (${i.variant})` : ""}</td>
-              <td>{i.quantity}</td>
-              <td>{formatNaira(i.unit_price_kobo)}</td>
-              <td>{formatNaira(i.line_total_kobo)}</td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr><td colSpan={3}>Total</td><td>{formatNaira(order.total_kobo)}</td></tr>
-          <tr><td colSpan={3}>Paid</td><td>{formatNaira(order.paid_kobo)}</td></tr>
-          <tr><td colSpan={3}>Outstanding</td><td><b>{formatNaira(outstanding)}</b></td></tr>
-        </tfoot>
-      </table>
+      <form className="order-item-pricing" onSubmit={(event) => void saveItemPrices(event)}>
+      <div className="order-items-scroll">
+        <table className="dash-table">
+          <thead><tr><th>Item</th><th>Qty</th><th>Agreed unit price</th><th>Item total</th></tr></thead>
+          <tbody>
+            {previewLines.map(({ item, unitPrice, lineTotal }) => (
+              <tr key={item.id}>
+                <td>{item.product_name}{item.variant ? ` (${item.variant})` : ""}</td>
+                <td>{item.quantity}</td>
+                <td><label className="sr-only" htmlFor={`agreed-price-${item.id}`}>Agreed unit price for {item.product_name} (₦)</label><input className="order-item-price-input" id={`agreed-price-${item.id}`} inputMode="decimal" value={itemPrices[item.id] ?? koboToInput(item.unit_price_kobo)} disabled={busy || cancelled} onChange={(event) => setItemPrices((current) => ({ ...current, [item.id]: event.target.value }))} /></td>
+                <td>{lineTotal === null ? "—" : formatNaira(lineTotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr><td colSpan={3}>New agreed total</td><td>{previewTotal === null ? "Check item prices" : formatNaira(previewTotal)}</td></tr>
+            <tr><td colSpan={3}>Paid so far</td><td>{formatNaira(order.paid_kobo)}</td></tr>
+            <tr><td colSpan={3}>New balance due</td><td><b>{previewTotal === null ? "—" : formatNaira(previewTotal - order.paid_kobo)}</b></td></tr>
+          </tfoot>
+        </table>
+      </div>
 
-      <div className="field">
+      {!cancelled && <div className="order-item-pricing-actions">
+        <p className="muted">Set the agreed price for each item. Changes apply to this order only; catalogue prices stay the same.</p>
+        {previewBelowPaid && <p className="order-price-warning">Item prices must total at least the {formatNaira(order.paid_kobo)} already paid.</p>}
+        <button className="btn btn-outline" type="submit" disabled={busy || !itemPricesChanged || previewTotal === null || previewTotal < 1 || previewBelowPaid}>{busy ? "Saving…" : "Save agreed prices"}</button>
+      </div>}
+      </form>
+
+      {order.status === "pending" || order.status === "confirmed" ? <div className="field">
         <label htmlFor="order-status">Order status</label>
         <select id="order-status" value={order.status} disabled={busy || cancelled} onChange={(e) => void setStatus(e.target.value as OrderStatus)}>
-          {ORDER_STATUSES.filter((s) => s.value !== "pending" || order.status === "pending").map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
+          <option value="pending" disabled={order.status !== "pending"}>Pending</option>
+          <option value="confirmed">Confirmed</option>
         </select>
-      </div>
+      </div> : <p className="muted order-current-status">Order status: <StatusBadge status={order.status} /></p>}
 
       <h3>Payments</h3>
       {order.payments.length === 0 ? (
@@ -166,6 +211,13 @@ function OrdersView({ storeName }: { storeName: string }) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!selected || !window.matchMedia("(max-width: 640px)").matches) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [selected]);
+
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return rows;
@@ -230,7 +282,10 @@ function OrdersView({ storeName }: { storeName: string }) {
           {rows && rows.length >= 300 && <p className="muted">Showing the latest 300 orders. Use the filters to narrow down.</p>}
         </div>
       )}
-      {selected && <Detail id={selected} storeName={storeName} onChanged={() => void load()} />}
+      {selected && <div className="order-detail-drawer">
+        <div className="order-detail-drawer-head"><span>Order details</span><button type="button" aria-label="Close order details" onClick={() => select(null)}><X size={20} aria-hidden="true" /></button></div>
+        <Detail id={selected} storeName={storeName} onChanged={() => void load()} />
+      </div>}
     </>
   );
 }

@@ -148,6 +148,7 @@ describe("confirmPayment", () => {
       transaction_id: 99,
       channel: "card",
       paid_at: "2026-11-11T10:00:00Z",
+      customer_code: null,
     });
   });
 

@@ -33,6 +33,11 @@ export interface PaystackVerifyData {
   id: number;
   channel?: string;
   paid_at?: string | null;
+  /** Who paid. Present on every verified transaction; renewals are matched to a vendor through customer_code. */
+  customer?: { customer_code?: string | null; email?: string | null } | null;
+  /** Set on charges made by a Paystack subscription plan: an object with plan_code, or the plan code itself. */
+  plan?: unknown;
+  plan_object?: unknown;
 }
 
 export interface InitializeInput {
@@ -74,6 +79,9 @@ export function createPaystackClient(secretKey: string, fetchImpl: typeof fetch 
           metadata: i.metadata ?? {},
         }),
       }),
+    /** A link where the customer can update the card behind their subscription. */
+    manageLink: (subscriptionCode: string) =>
+      call<{ link: string }>(`/subscription/${encodeURIComponent(subscriptionCode)}/manage/link`),
     verify: (reference: string) => call<PaystackVerifyData>(`/transaction/verify/${encodeURIComponent(reference)}`),
   };
 }

@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 
 import { Link } from "react-router-dom";
-import { MessageCircle, Package, Plus, Users, Wallet, ShoppingBag } from "lucide-react";
 import { Alert } from "../components/AuthLayout";
 import { DashboardShell, dateTime, PayBadge, StatusBadge } from "../components/DashboardShell";
 import { ShareButton } from "../components/ShareButton";
 import { PAGE_META } from "../data/pageMeta";
 import { formatNaira } from "../lib/money";
-import { methodLabel, storeShareMessage, whatsappLink } from "../lib/sales";
+import { methodLabel } from "../lib/sales";
 import { storePath } from "../lib/routes";
-import { absoluteUrl, SITE } from "../lib/site";
+import { SITE } from "../lib/site";
 import type { Me } from "../services/api";
 import { getDashboardSummary, type DashboardSummary } from "../services/sales";
 
@@ -47,32 +46,10 @@ function Overview({ me }: { me: Me }) {
   }, []);
 
   const store = me.store!;
-  const url = absoluteUrl(storePath(store.slug));
   const until = me.subscription ? new Date(me.subscription.current_period_end).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
 
   return (
     <>
-      <div className="quick-actions">
-        <Link className="btn btn-primary" to="/dashboard/sale">
-          <Plus size={16} aria-hidden="true" /> Record sale
-        </Link>
-        <Link className="btn btn-outline" to="/dashboard/products?new=1">
-          <Package size={16} aria-hidden="true" /> Add product
-        </Link>
-        <Link className="btn btn-outline" to="/dashboard/orders">
-          <ShoppingBag size={16} aria-hidden="true" /> View orders
-        </Link>
-        <Link className="btn btn-outline" to="/dashboard/customers">
-          <Users size={16} aria-hidden="true" /> View customers
-        </Link>
-        <Link className="btn btn-outline" to="/dashboard/customers?owing=1">
-          <Wallet size={16} aria-hidden="true" /> View debts
-        </Link>
-        <a className="btn btn-outline" href={whatsappLink(storeShareMessage(store.name, url))} target="_blank" rel="noopener noreferrer">
-          <MessageCircle size={16} aria-hidden="true" /> Share my store
-        </a>
-      </div>
-
       {error && <Alert kind="error">{error}</Alert>}
       {!s && !error && <p className="auth-loading">Loading your figures…</p>}
       {s && (

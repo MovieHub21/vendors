@@ -3,6 +3,9 @@ import { adminClient, requireUser, route } from "../_shared/runtime.ts";
 
 export type NextStep = "create_store" | "subscribe" | "done";
 
+const BASE_SUB = "plan_code, status, current_period_end";
+const BILLING_SUB = `${BASE_SUB}, auto_renew, renewal_failed_at, renewal_failure_reason`;
+
 Deno.serve(
   route(["GET", "POST"], async (req) => {
     const user = await requireUser(req);
@@ -17,20 +20,37 @@ Deno.serve(
         )
         .eq("owner_id", user.id)
         .maybeSingle(),
-      db.from("subscriptions").select("plan_code, status, current_period_end").eq("owner_id", user.id).maybeSingle(),
+      db.from("subscriptions").select(BILLING_SUB).eq("owner_id", user.id).maybeSingle(),
       db.rpc("store_seo_status", { p_owner: user.id }),
     ]);
-    for (const r of [profile, store, subscription, seo]) if (r.error) throw r.error;
+    for (const r of [profile, store, seo]) if (r.error) throw r.error;
 
-    const active =
-      subscription.data?.status === "active" && new Date(subscription.data.current_period_end).getTime() > Date.now();
+    // The billing columns arrive with migration 20261114000000. Until it has been run, fall back to the old columns
+    // instead of breaking the whole app.
+    let sub = subscription;
+    if (sub.error?.code === "42703") sub = await db.from("subscriptions").select(BASE_SUB).eq("owner_id", user.id).maybeSingle();
+    if (sub.error) throw sub.error;
+    const account = await db.from("billing_accounts").select("paystack_subscription_code").eq("owner_id", user.id).maybeSingle();
+
+    const active = sub.data?.status === "active" && new Date(sub.data.current_period_end).getTime() > Date.now();
     const next_step: NextStep = !store.data ? "create_store" : !active ? "subscribe" : "done";
 
     return {
       user: { id: user.id, email: user.email },
       profile: profile.data,
       store: store.data,
-      subscription: subscription.data ? { ...subscription.data, active } : null,
+      subscription: sub.data ? { ...sub.data, active } : null,
+      billing: sub.data
+        ? {
+            // renewal_failed: the card could not be charged · expired: the paid period ended · active: all good
+            state: sub.data.renewal_failed_at ? "renewal_failed" : active ? "active" : "expired",
+            auto_renew: sub.data.auto_renew === true,
+            period_end: sub.data.current_period_end,
+            failed_at: sub.data.renewal_failed_at ?? null,
+            failure_reason: sub.data.renewal_failure_reason ?? null,
+            can_update_card: sub.data.auto_renew === true && Boolean(account.data?.paystack_subscription_code),
+          }
+        : null,
       seo_status: seo.data,
       next_step,
     };

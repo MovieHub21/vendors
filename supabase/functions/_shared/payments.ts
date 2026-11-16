@@ -12,11 +12,13 @@ export interface ApplyArgs {
   transaction_id: number;
   channel: string | null;
   paid_at: string | null;
+  /** Paystack's customer for this payment, so later automatic renewals can be matched to the vendor. */
+  customer_code: string | null;
 }
 
 export interface ConfirmDeps {
   verify(reference: string): Promise<PaystackVerifyData>;
-  apply(args: ApplyArgs): Promise<{ already_applied: boolean }>;
+  apply(args: ApplyArgs): Promise<{ already_applied: boolean; owner_id?: string }>;
   markFailed(reference: string): Promise<void>;
 }
 
@@ -37,6 +39,7 @@ export async function confirmPayment(reference: string, deps: ConfirmDeps): Prom
       transaction_id: data.id,
       channel: data.channel ?? null,
       paid_at: data.paid_at ?? null,
+      customer_code: data.customer?.customer_code ?? null,
     });
     return { status: "success", alreadyApplied: applied.already_applied };
   }

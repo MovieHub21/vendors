@@ -114,6 +114,17 @@ export interface SubscriptionSummary {
   current_period_end: string;
   active: boolean;
 }
+/** Renewal state, shown on the dashboard even when the subscription has ended. */
+export interface Billing {
+  /** renewal_failed: the card couldn't be charged · expired: the paid period ended · active: all good */
+  state: "active" | "renewal_failed" | "expired";
+  auto_renew: boolean;
+  period_end: string;
+  failed_at: string | null;
+  failure_reason: string | null;
+  /** true when Paystack can send the vendor to a page to change the card behind their automatic payment */
+  can_update_card: boolean;
+}
 export type NextStep = "create_store" | "subscribe" | "done";
 export interface Me {
   user: { id: string; email: string | null };
@@ -122,6 +133,8 @@ export interface Me {
   store: OwnStore | null;
   subscription: SubscriptionSummary | null;
   seo_status: SeoStatus | null;
+  /** Absent until the billing update is deployed. */
+  billing?: Billing | null;
 
   next_step: NextStep;
 }
@@ -183,6 +196,7 @@ export async function call<T>(name: string, body?: Record<string, unknown>): Pro
   let code = "request_failed";
   let detail = "";
   const response = (error as { context?: Response }).context;
+  const status = (response as Response | undefined)?.status ?? 0;
   if (response && typeof response.json === "function") {
     try {
       const payload = (await response.json()) as { error?: string; message?: string };
@@ -197,7 +211,10 @@ export async function call<T>(name: string, body?: Record<string, unknown>): Pro
       ? (SLUG_MESSAGES[detail] ?? SLUG_MESSAGES.invalid_characters)
       : (code === "invalid_template" || code === "invalid_payment_details") && detail
         ? detail
-        : (MESSAGES[code] ?? "Something went wrong. Please try again.");
+        : (MESSAGES[code] ??
+          // Our functions write their 4xx messages for people ("Choose a valid admin action."), so show them.
+          // Never show 5xx details: those can contain database internals.
+          (status >= 400 && status < 500 && detail ? detail : "Something went wrong. Please try again."));
   return fail(code, message);
 }
 
@@ -205,6 +222,7 @@ export const getMe = () => call<Me>("me");
 export const checkSlug = (slug: string) =>
   call<{ slug: string; available: boolean; reason?: string }>("check-slug", { slug });
 export const createStore = (input: StoreInput) => call<{ store: StoreSummary }>("create-store", { ...input });
+export const getCardUpdateLink = () => call<{ link?: string; fallback?: "checkout" }>("billing-manage-link", {});
 export const startSubscription = () =>
   call<{ authorization_url: string; reference: string }>("subscription-initialize", {});
 

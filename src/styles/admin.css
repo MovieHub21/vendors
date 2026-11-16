@@ -90,6 +90,39 @@
 .admin-notice { border-color: var(--color-line); color: var(--color-ink); background: var(--color-page); }
 .admin-loading, .admin-empty { color: var(--color-muted); font-size: 13px; }
 
+/* Admin access: group account setup and permission management into readable cards. */
+.admin-access-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .72fr); gap: 18px 22px; padding: 24px; box-shadow: 0 10px 28px rgb(23 35 55 / 4%); }
+.admin-access-form-heading { grid-column: 1 / -1; padding-bottom: 16px; border-bottom: 1px solid var(--color-line); }
+.admin-access-form-heading h2 { margin: 0 0 5px; font-size: 19px; }
+.admin-access-form-heading p { margin: 0; color: var(--color-muted); font-size: 12px; line-height: 1.55; }
+.admin-access-email, .admin-access-reason, .admin-member-actions > label, .admin-remove-confirm > label { display: grid; align-content: start; gap: 7px; color: var(--color-ink); font-size: 12px; font-weight: 700; }
+.admin-access-email input, .admin-access-reason input, .admin-member-actions input, .admin-remove-confirm input { width: 100%; min-height: 43px; padding: 10px 12px; border: 1px solid var(--color-line); border-radius: 9px; outline: 0; color: var(--color-ink); background: var(--color-page); font: 13px var(--font-body); }
+.admin-access-email input:focus, .admin-access-reason input:focus, .admin-member-actions input:focus, .admin-remove-confirm input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 14%, transparent); }
+.admin-access-form > .admin-permission-fieldset { grid-column: 1 / -1; }
+.admin-permission-fieldset { min-width: 0; margin: 0; padding: 16px; border: 1px solid var(--color-line); border-radius: 11px; }
+.admin-permission-fieldset legend { padding: 0 7px; color: var(--color-ink); font-size: 12px; font-weight: 750; }
+.admin-permission-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.admin-permission-option { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 12px; border: 1px solid var(--color-line); border-radius: 9px; background: var(--color-page); cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.admin-permission-option:has(input:checked) { border-color: color-mix(in srgb, var(--color-accent) 48%, var(--color-line)); background: color-mix(in srgb, var(--color-accent) 6%, var(--color-page)); }
+.admin-permission-option input { width: 16px; height: 16px; flex: none; margin: 1px 0 0; accent-color: var(--color-brand); }
+.admin-permission-option span { display: grid; gap: 4px; min-width: 0; }
+.admin-permission-option b { font-size: 12px; }
+.admin-permission-option small { color: var(--color-muted); font-size: 10px; line-height: 1.45; }
+.admin-access-form > .admin-button { justify-self: end; min-height: 42px; padding: 0 17px; }
+.admin-access-list { margin-top: 27px; }
+.admin-access-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.admin-access-list-heading h2 { margin: 0; font: 750 18px var(--font-display); }
+.admin-access-list-heading > span { padding: 5px 9px; border-radius: 99px; color: var(--color-muted); background: var(--color-page); font-size: 11px; font-weight: 700; }
+.admin-member { padding: 20px; }
+.admin-member-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 17px; }
+.admin-member-header h3 { margin: 0; overflow-wrap: anywhere; font: 700 14px var(--font-display); }
+.admin-member-header p { margin: 5px 0 0; color: var(--color-muted); font-size: 11px; }
+.admin-member .admin-permission-fieldset { margin-bottom: 15px; }
+.admin-super-summary { padding: 13px 14px; border: 1px solid var(--color-line); border-radius: 9px; color: var(--color-muted); background: var(--color-band); font-size: 12px; line-height: 1.5; }
+.admin-member-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: end; gap: 10px; }
+.admin-remove-confirm { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px; padding-top: 15px; border-top: 1px solid var(--color-line); }
+.admin-remove-confirm > div { display: flex; gap: 8px; }
+
 @media (max-width: 1050px) {
   .admin-layout { grid-template-columns: 200px minmax(0, 1fr); }
   .admin-main { padding: 28px 24px 60px; }
@@ -121,4 +154,13 @@
   .admin-ticket-form button { grid-column: auto; justify-self: stretch; }
   .admin-ticket-head { gap: 8px; }
   .admin-activity-head { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .admin-access-form { grid-template-columns: 1fr; gap: 15px; padding: 17px; }
+  .admin-access-form-heading, .admin-access-form > .admin-permission-fieldset { grid-column: auto; }
+  .admin-permission-fieldset { padding: 13px; }
+  .admin-permission-grid { grid-template-columns: 1fr; }
+  .admin-access-form > .admin-button { width: 100%; }
+  .admin-member { padding: 16px; }
+  .admin-member-actions, .admin-remove-confirm { grid-template-columns: 1fr; }
+  .admin-member-actions > button, .admin-remove-confirm > div { width: 100%; }
+  .admin-remove-confirm > div > button { flex: 1; }
 }

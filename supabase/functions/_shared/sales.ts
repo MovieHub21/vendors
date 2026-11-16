@@ -174,6 +174,25 @@ export function parseStatusChange(body: Record<string, unknown>) {
   return { order_id: uuid(body.order_id, "order_id"), status: oneOf(body.status, ORDER_STATUSES, "Status") };
 }
 
+export function parseOrderItemPrices(body: Record<string, unknown>) {
+  const order_id = uuid(body.order_id, "order_id");
+  if (!Array.isArray(body.items) || body.items.length === 0 || body.items.length > 50) {
+    throw new HttpError(422, "invalid_order_prices", "Please enter an agreed price for each item.");
+  }
+  const seen = new Set<string>();
+  const items = body.items.map((raw, index) => {
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+      throw new HttpError(422, "invalid_order_prices", `Item ${index + 1} price is not valid.`);
+    }
+    const item = raw as Record<string, unknown>;
+    const order_item_id = uuid(item.order_item_id, `items[${index}].order_item_id`);
+    if (seen.has(order_item_id)) throw new HttpError(422, "invalid_order_prices", "An item price was included more than once.");
+    seen.add(order_item_id);
+    return { order_item_id, unit_price_kobo: kobo(item.unit_price_kobo, `Item ${index + 1} agreed price`) };
+  });
+  return { order_id, items };
+}
+
 const RPC_ERRORS: Record<string, [number, string, string]> = {
   insufficient_stock: [409, "insufficient_stock", "There isn't enough stock for one of these products."],
   product_not_found: [422, "product_not_found", "One of the products no longer exists in your catalogue."],
@@ -185,6 +204,11 @@ const RPC_ERRORS: Record<string, [number, string, string]> = {
   order_paid: [409, "order_paid", "This order is fully paid, so it has no invoice. Open its receipt instead."],
   invalid_transition: [409, "invalid_transition", "That status change isn't allowed."],
   overpayment: [409, "overpayment", "That is more than the customer still owes."],
+  agreed_prices_below_paid: [409, "agreed_prices_below_paid", "The agreed item prices can't total less than the amount already paid."],
+  invalid_order_prices: [422, "invalid_order_prices", "Please enter a valid agreed price for each item."],
+  invalid_order_total: [422, "invalid_order_total", "The agreed order total must be greater than zero."],
+  order_item_not_found: [404, "order_item_not_found", "One of these items no longer belongs to this order."],
+  order_has_no_items: [409, "order_has_no_items", "This order has no items to update."],
   invalid_payment: [422, "invalid_payment", "Please check the payment details."],
   invalid_customer: [422, "invalid_customer", "Please check the customer details."],
   invalid_item: [422, "invalid_item", "Please check the products and quantities."],

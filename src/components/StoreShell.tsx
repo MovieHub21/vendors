@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { storeAboutPath, storePath } from "../lib/routes";
 import { SITE } from "../lib/site";
 import type { VendorStore } from "../types/store";
-import { ThemeToggle } from "./ThemeToggle";
 import { AtSign, Facebook, Ghost, Globe, Instagram, Linkedin, MessageCircle, Music2, Pin, X as XBrand, Youtube, type LucideIcon } from "lucide-react";
 import { formatNaira } from "../lib/money";
 import { whatsappLink, whatsappNumber } from "../lib/sales";
@@ -47,7 +46,9 @@ export function StoreShell({ store, children }: { store: VendorStore; children: 
           <button type="button" className="sf-header-cart" onClick={() => cart.openCart(store.slug)} aria-label={`Open cart${cart.count(store.slug) ? `, ${cart.count(store.slug)} items` : ""}`}>
             Cart{cart.count(store.slug) > 0 && <span>{cart.count(store.slug)}</span>}
           </button>
-          <ThemeToggle />
+          {whatsappNumber(store.contactPhone) && <a className="sf-header-chat" href={whatsappLink(`Hello, I found your store on SellSharp and have a few enquiries.`, store.contactPhone)} target="_blank" rel="noopener noreferrer">
+            <MessageCircle size={16} aria-hidden="true" /> Chat with seller
+          </a>}
         </div>
       </header>
       <main id="main">
