@@ -1,5 +1,4 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingBag } from "lucide-react";
 import { SITE } from "../lib/site";
 import { useAuth } from "../auth/useAuth";
 import { signOut } from "../services/auth";
@@ -12,20 +11,14 @@ export function Footer() {
       <div className="container footer-main">
         <div className="footer-brand-col">
           <Link to="/" className="brand brand-footer">
-            <span className="brand-mark">
-              <ShoppingBag size={18} />
-            </span>
-            <span>
-              sell<span className="brand-light">sharp</span>
-              <i>.</i>
-            </span>
+            <img src="/logo-icon.jpg" alt="Sellsharp" className="brand-logo-img" />
           </Link>
           <p>Less order stress. More time to grow your business.</p>
           <span className="footer-location">Made for ambitious businesses in Nigeria.</span>
         </div>
         <div className="footer-col">
           <b>Product</b>
-          <Link to="/features">Features</Link>
+          <Link to="/features">How it works</Link>
           <Link to="/pricing">Pricing</Link>
           <Link to="/faq">FAQs</Link>
 

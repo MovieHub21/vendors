@@ -21,6 +21,13 @@
   letter-spacing: -1.2px;
   color: var(--tx-172337);
 }
+/* Logo image replaces old text mark in public header/footer */
+.brand-logo-img {
+  height: 36px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
 .brand-mark,
 .mini-mark {
   width: 31px;

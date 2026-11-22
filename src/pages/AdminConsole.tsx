@@ -171,7 +171,7 @@ export default function AdminConsole() {
     <main className="admin-app">
       <Seo seo={{ title: "SellSharp Management", description: "Private SellSharp platform management console.", path: "/management", noindex: true, nofollow: true }} />
       <header className="admin-topbar">
-        <Link to="/" className="admin-brand"><span className="admin-brand-mark">S</span><span>SellSharp <small>ADMIN</small></span></Link>
+        <Link to="/" className="admin-brand"><img src="/logo-icon.jpg" alt="Sellsharp" className="admin-brand-logo" /><span>SellSharp <small>ADMIN</small></span></Link>
         <div className="admin-top-actions"><span>Platform operations</span><Link to="/">Back to website</Link></div>
       </header>
       <div className="admin-layout">

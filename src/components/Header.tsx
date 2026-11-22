@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { ArrowRight, ArrowUpRight, Menu, ShoppingBag, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Menu, X } from "lucide-react";
 import { useAuth } from "../auth/useAuth";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -12,17 +12,11 @@ export function Header() {
     <header className="site-header">
       <div className="nav-wrap container">
         <Link to="/" className="brand" onClick={close}>
-          <span className="brand-mark">
-            <ShoppingBag size={18} strokeWidth={2.5} />
-          </span>
-          <span>
-            sell<span className="brand-light">sharp</span>
-            <i>.</i>
-          </span>
+          <img src="/logo-icon.jpg" alt="Sellsharp" className="brand-logo-img" />
         </Link>
         <nav className={`nav-links ${open ? "nav-open" : ""}`}>
           <NavLink to="/features" onClick={close}>
-            Features
+            How it works
           </NavLink>
           <NavLink to="/pricing" onClick={close}>
             Pricing

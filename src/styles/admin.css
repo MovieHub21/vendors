@@ -1,6 +1,7 @@
 .admin-app { min-height: 100vh; color: var(--color-ink); background: var(--color-band); }
 .admin-topbar { height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 28px; background: var(--color-page); border-bottom: 1px solid var(--color-line); }
 .admin-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--color-ink); font: 800 16px var(--font-display); }
+.admin-brand-logo { height: 28px; width: auto; object-fit: contain; display: block; }
 .admin-brand > span:last-child { display: flex; align-items: center; gap: 9px; }
 .admin-brand small { padding: 4px 6px; border-radius: 5px; color: var(--color-accent); background: var(--bg-f1edfa); font: 700 9px var(--font-body); letter-spacing: .08em; }
 .admin-brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: #fff; background: var(--color-brand); }

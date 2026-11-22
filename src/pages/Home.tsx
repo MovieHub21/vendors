@@ -36,7 +36,7 @@ export default function Home() {
 
               Your business deserves
               <br />
-              its own <em>online store</em>.
+              its own <em>online presence</em>.
 
             </h1>
             <p className="hero-sub">

@@ -8,9 +8,10 @@ import { buildStoreSeo, storeLocation } from "../../lib/seo";
 import type { Product, VendorStore } from "../../types/store";
 import { ProductCard } from "./ProductCard";
 import { ShowcaseStoreHome } from "./ShowcaseStoreHome";
+import { StoreProductSearch } from "./StoreProductSearch";
 
 export function StoreHome({ store, products, preview = false }: { store: VendorStore; products: Product[]; preview?: boolean }) {
-  if (store.storefrontLayout === "showcase") return <ShowcaseStoreHome store={store} products={products} includeSeo={!preview} />;
+  if (store.storefrontLayout === "showcase") return <ShowcaseStoreHome store={store} products={products} includeSeo={!preview} enableSearch={!preview} />;
   const place = [store.city, store.state].filter(Boolean).join(", ");
   return (
     <StoreShell store={store}>
@@ -62,6 +63,7 @@ export function StoreHome({ store, products, preview = false }: { store: VendorS
           </div>
         </div>
       </section>
+      {!preview && <StoreProductSearch store={store} />}
       <section className="container sf-products" aria-labelledby="sf-products-title">
         <div className="sf-section-heading">
           <div>

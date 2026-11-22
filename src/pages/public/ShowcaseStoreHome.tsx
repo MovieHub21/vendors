@@ -8,10 +8,11 @@ import { buildStoreSeo } from "../../lib/seo";
 import { productPath, storeProductsPath } from "../../lib/routes";
 import { formatNaira } from "../../lib/money";
 import type { Product, VendorStore } from "../../types/store";
+import { StoreProductSearch } from "./StoreProductSearch";
 
 const categoriesOf = (products: Product[]) => [...new Set(products.map((product) => product.category?.trim()).filter((x): x is string => Boolean(x)))].sort((a, b) => a.localeCompare(b));
 
-export function ShowcaseStoreHome({ store, products, includeSeo = true }: { store: VendorStore; products: Product[]; includeSeo?: boolean }) {
+export function ShowcaseStoreHome({ store, products, includeSeo = true, enableSearch = true }: { store: VendorStore; products: Product[]; includeSeo?: boolean; enableSearch?: boolean }) {
   const categories = useMemo(() => categoriesOf(products), [products]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const visibleProducts = activeCategory ? products.filter((product) => product.category?.trim() === activeCategory) : products;
@@ -32,6 +33,8 @@ export function ShowcaseStoreHome({ store, products, includeSeo = true }: { stor
           </div>
         </div>
       </section>
+
+      {enableSearch && <StoreProductSearch store={store} />}
 
       {categories.length > 0 && (
         <section className="container showcase-categories" aria-labelledby="showcase-categories-title">

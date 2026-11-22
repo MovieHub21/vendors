@@ -5,15 +5,15 @@
 const rawUrl = import.meta.env.VITE_SITE_URL ?? "https://sellsharp.ng";
 
 export const SITE = {
-  name: "SellSharp",
+  name: "Sellsharp",
   url: rawUrl.replace(/\/+$/, ""),
   locale: "en_NG",
   country: "NG",
-  tagline: "Your business, in better order.",
+  tagline: "Connecting Sellers. Powering Possibilities.",
   description:
-    "SellSharp gives Nigerian WhatsApp vendors a shareable online store, order dashboard, receipts and debt tracker. Plans from ₦3,000 a month.",
-  ogImage: "/og-default.png",
-  ogImageAlt: "SellSharp — online store and order manager for Nigerian vendors",
+    "Sellsharp gives Nigerian WhatsApp vendors a shareable online store, order dashboard, receipts and debt tracker. Plans from ₦3,000 a month.",
+  ogImage: "/logo-full.jpg",
+  ogImageAlt: "Sellsharp — Connecting Sellers. Powering Possibilities.",
   monthlyPriceKobo: 300_000,
 } as const;
 

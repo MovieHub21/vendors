@@ -116,7 +116,7 @@ export const organizationJsonLd = (): JsonLd => ({
   "@id": absoluteUrl("/#organization"),
   name: SITE.name,
   url: absoluteUrl("/"),
-  logo: absoluteUrl("/logo-512.png"),
+  logo: absoluteUrl("/logo-icon.jpg"),
   areaServed: { "@type": "Country", name: "Nigeria" },
 });
 

@@ -51,6 +51,7 @@ export default function App() {
         <Route element={<MarketingLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/features" element={<Features />} />
+          <Route path="/how-it-works" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/contact" element={<Contact />} />

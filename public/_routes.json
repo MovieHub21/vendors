@@ -4,6 +4,8 @@
   "exclude": [
     "/assets/*",
     "/favicon.svg",
+    "/logo-icon.jpg",
+    "/logo-full.jpg",
     "/apple-touch-icon.png",
     "/logo-512.png",
     "/pwa-icon-192.png",

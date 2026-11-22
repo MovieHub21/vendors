@@ -17,6 +17,7 @@ export interface DirectoryQuery {
 export interface PublicApi {
   getStore(slug: string): Promise<VendorStore | null>;
   listProducts(storeSlug: string, opts?: { limit?: number }): Promise<Product[]>;
+  searchProducts(storeSlug: string, query: string, opts?: { limit?: number }): Promise<Product[]>;
   getProduct(storeSlug: string, productSlug: string): Promise<Product | null>;
   /** If a product was renamed, the slug it lives at now. */
   getProductRedirect(storeSlug: string, oldSlug: string): Promise<string | null>;
@@ -152,6 +153,28 @@ export function createRestApi(config: { url: string; key: string; fetch?: typeof
       });
       if (r.length > 0) return r.map(toProduct);
       return MOCK_PRODUCTS.filter((p) => p.storeSlug === storeSlug).slice(0, opts.limit ?? 60);
+    },
+    async searchProducts(storeSlug, query, opts = {}) {
+      if (!isSafeSlug(storeSlug)) return [];
+      const term = cleanSearchTerm(query);
+      if (!term) return [];
+      const words = [...new Set(term.split(" "))].slice(0, 8);
+      const patterns = [...new Set([term, ...words])];
+      const or = patterns.flatMap((word) => ["name", "description", "category"].map((field) => `${field}.ilike.*${word}*`)).join(",");
+      const r = await rows("public_products", {
+        select: "*",
+        store_slug: `eq.${storeSlug}`,
+        or: `(${or})`,
+        order: "created_at.desc",
+        limit: String(opts.limit ?? 300),
+      });
+      if (r.length > 0) return r.map(toProduct);
+      return MOCK_PRODUCTS.filter((p) => p.storeSlug === storeSlug)
+        .filter((p) => {
+          const haystack = `${p.name} ${p.description} ${p.category ?? ""}`.toLowerCase();
+          return words.some((word) => haystack.includes(word));
+        })
+        .slice(0, opts.limit ?? 300);
     },
     async getProduct(storeSlug, productSlug) {
       if (!isSafeSlug(storeSlug) || !isSafeSlug(productSlug)) return null;
@@ -297,6 +320,17 @@ export function createMemoryApi(data: {
     getStore: async (slug) => (isReservedSlug(slug) ? null : visible(slug)),
     listProducts: async (storeSlug, opts = {}) =>
       data.products.filter((p) => p.storeSlug === storeSlug).slice(0, opts.limit ?? 60),
+    searchProducts: async (storeSlug, query, opts = {}) => {
+      const term = cleanSearchTerm(query);
+      const words = [...new Set(term.split(" ").filter(Boolean))];
+      return data.products
+        .filter((p) => p.storeSlug === storeSlug)
+        .filter((p) => {
+          const haystack = `${p.name} ${p.description} ${p.category ?? ""}`.toLowerCase();
+          return words.some((word) => haystack.includes(word));
+        })
+        .slice(0, opts.limit ?? 300);
+    },
     getProduct: async (storeSlug, productSlug) =>
       data.products.find((p) => p.storeSlug === storeSlug && p.slug === productSlug) ?? null,
     getProductRedirect: async (storeSlug, oldSlug) =>

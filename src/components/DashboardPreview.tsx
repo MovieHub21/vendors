@@ -5,7 +5,6 @@ import {
   ClipboardList,
   FileText,
   Package,
-  ShoppingBag,
   Store,
   Users,
   Wallet,
@@ -33,10 +32,7 @@ export function DashboardPreview() {
     <div className="dashboard-shell">
       <div className="dash-top">
         <div className="dash-brand">
-          <span className="mini-mark">
-            <ShoppingBag size={12} />
-          </span>{" "}
-          sellsharp
+          <img src="/logo-icon.jpg" alt="Sellsharp" className="dash-brand-logo" />
         </div>
         <div className="dash-top-right">
           <span className="live-dot" /> Store is live <span className="avatar">A</span>
