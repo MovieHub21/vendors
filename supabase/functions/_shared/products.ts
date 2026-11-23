@@ -15,6 +15,7 @@ export interface ProductInput {
   name?: string;
   description?: string;
   price_kobo?: number;
+  unit_cost_kobo?: number | null;
   category?: string | null;
   status?: (typeof PRODUCT_STATUSES)[number];
   is_available?: boolean;
@@ -57,6 +58,12 @@ export function parseProduct(body: Record<string, unknown>, creating: boolean): 
       throw new HttpError(422, "invalid_input", "Price must be at least ₦0.01 and a whole number of kobo");
     }
     out.price_kobo = p;
+  }
+  if (has("unit_cost_kobo")) {
+    const cost = body.unit_cost_kobo;
+    if (cost === null) out.unit_cost_kobo = null;
+    else if (typeof cost === "number" && Number.isSafeInteger(cost) && cost >= 0 && cost <= MAX_PRODUCT_KOBO) out.unit_cost_kobo = cost;
+    else throw new HttpError(422, "invalid_input", "Unit cost must be a whole amount in kobo, or left empty if unknown");
   }
   if (has("category")) out.category = cleanText(body.category, "Category", 40);
   if (has("status")) {

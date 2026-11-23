@@ -9,6 +9,8 @@ export interface SaleLineInput {
   quantity: number;
   /** Kobo. Optional for catalogue products (the catalogue price is used); required for custom lines. */
   unit_price_kobo?: number;
+  /** Kobo, only for custom vendor-entered items; catalogue costs are read from the database. */
+  unit_cost_kobo?: number | null;
 }
 export interface CustomerDetails {
   name: string;
@@ -49,10 +51,8 @@ export interface Receipt {
   created: boolean;
 }
 export interface DashboardSummary {
-  total_sales_kobo: number;
   sales_today_kobo: number;
-  sales_month_kobo: number;
-  total_orders: number;
+  orders_today: number;
   pending_orders: number;
   awaiting_delivery: number;
   outstanding_kobo: number;
@@ -80,11 +80,16 @@ export interface DashboardSummary {
     recorded_at: string;
   }[];
 }
+export interface DashboardPeriodSummary {
+  sales_kobo: number;
+  total_orders: number;
+}
 export interface ProductInput {
   product_id?: string;
   name?: string;
   description?: string;
   price_kobo?: number;
+  unit_cost_kobo?: number | null;
   category?: string | null;
   status?: "draft" | "published" | "archived";
   is_available?: boolean;
@@ -109,12 +114,14 @@ export interface PlacedOrder {
 export const recordSale = (input: RecordSaleInput) => call<{ sale: SaleResult }>("record-sale", { ...input });
 export const updateOrderStatus = (orderId: string, status: OrderStatus) =>
   call<{ order: { order_id: string; status: OrderStatus } }>("update-order-status", { order_id: orderId, status });
-export const updateOrderItemPrices = (orderId: string, items: { order_item_id: string; unit_price_kobo: number }[]) =>
+export const updateOrderItemPrices = (orderId: string, items: { order_item_id: string; unit_price_kobo: number; unit_cost_kobo?: number | null }[]) =>
   call<{ order: { order_id: string; total_kobo: number; paid_kobo: number; outstanding_kobo: number } }>("update-order-item-prices", { order_id: orderId, items });
 export const recordOrderPayment = (orderId: string, amountKobo: number, method: PaymentMethod, note?: string) =>
   call<{ payment: PaymentResult }>("record-payment", { order_id: orderId, amount_kobo: amountKobo, method, note });
 export const getReceipt = (orderId: string) => call<{ receipt: Receipt }>("order-receipt", { order_id: orderId });
 export const getDashboardSummary = () => call<{ summary: DashboardSummary }>("dashboard-summary");
+export const getDashboardSales = (period: "month" | "all_time") =>
+  call<{ sales: DashboardPeriodSummary }>("dashboard-summary", { period });
 export const saveProduct = (input: ProductInput) => call<{ product: { id: string; slug: string; name: string } }>("save-product", { ...input });
 export const productAction = (productId: string, action: "duplicate" | "hide" | "show" | "delete") =>
   call<{ product?: { id: string; name?: string; status: string }; deleted?: boolean }>("product-action", { product_id: productId, action });

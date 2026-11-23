@@ -15,7 +15,7 @@ supabase/
 
 1. Supabase dashboard → **SQL Editor → New query**.
 2. Paste the whole of **`supabase/setup.sql`** and click **Run**. It is safe to run again.
-3. Check **Table Editor**: you should see `profiles`, `stores`, `subscription_plans`, `subscriptions`, `payments`, `webhook_events`, `reserved_slugs`, `products`, `product_images`, `customers`, `orders`, `order_items`, `order_payments`, `receipts`.
+3. Check **Table Editor**: you should see `profiles`, `stores`, `subscription_plans`, `subscriptions`, `payments`, `webhook_events`, `reserved_slugs`, `products`, `product_images`, `customers`, `orders`, `order_items`, `order_payments`, `receipts`, and `business_expenses`.
 
 (Prefer the CLI? `supabase link --project-ref <ref>` then `supabase db push` applies `migrations/` instead.)
 
@@ -39,7 +39,7 @@ supabase login
 supabase link --project-ref YOUR-PROJECT-REF
 cp supabase/functions/.env.example supabase/functions/.env      # fill in PAYSTACK_SECRET_KEY and SITE_URL
 supabase secrets set --env-file supabase/functions/.env
-supabase functions deploy me check-slug create-store update-store-seo subscription-initialize subscription-verify paystack-webhook
+supabase functions deploy me check-slug create-store update-store-seo subscription-initialize subscription-verify paystack-webhook place-order record-sale update-order-status record-payment order-receipt order-invoice save-document-template save-payment-details dashboard-summary save-product product-action update-order-item-prices expenses profit-loss
 ```
 
 `SUPABASE_URL` and the Supabase keys are injected automatically. Never put the secret key in the website's `.env`.
@@ -106,3 +106,8 @@ Deploy with `supabase functions deploy <name>`. All need a login except `place-o
 | `save-payment-details` | Vendor: bank / account details printed on invoices (migration 0700) |
 | `dashboard-summary` | Vendor: dashboard figures, computed in Postgres |
 | `save-product`, `product-action` | Vendor: add/edit products; duplicate, hide/show, delete |
+| `update-order-item-prices` | Vendor: correct agreed prices and historical unit costs on an order |
+| `expenses` | Vendor: list, add, edit and remove operating expenses |
+| `profit-loss` | Vendor: calculate period revenue, item costs, expenses and estimated profit |
+
+The Profit & loss page is available from the vendor dashboard. Set a product's unit cost so new orders save a private cost snapshot; custom sale lines can include their cost too. Older orders have unknown costs until the vendor fills them in under Orders. Unknown costs keep gross and net profit marked incomplete instead of treating them as zero. Add rent, packaging, delivery and other operating expenses on the Profit & loss page. Stock purchases are not operating expenses in this report because the cost of goods is counted when the items sell.

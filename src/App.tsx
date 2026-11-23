@@ -32,6 +32,7 @@ import ReceiptPage from "./pages/ReceiptPage";
 import Receipts from "./pages/Receipts";
 import RecordSale from "./pages/RecordSale";
 import Pricing from "./pages/Pricing";
+import ProfitLoss from "./pages/ProfitLoss";
 import PublicPage from "./pages/public/PublicPage";
 import ResetPassword from "./pages/ResetPassword";
 import Signup from "./pages/Signup";
@@ -85,6 +86,15 @@ export default function App() {
             element={
               <RequireAuth>
                 <Dashboard />
+              </RequireAuth>
+            }
+          />
+
+          <Route
+            path="/dashboard/profit-loss"
+            element={
+              <RequireAuth>
+                <ProfitLoss />
               </RequireAuth>
             }
           />

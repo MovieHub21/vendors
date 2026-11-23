@@ -77,6 +77,7 @@ export interface LineItem {
   variant?: string;
   quantity: number;
   unit_price_kobo?: number;
+  unit_cost_kobo?: number;
 }
 
 /**
@@ -105,6 +106,9 @@ export function parseItems(raw: unknown, mode: "public" | "vendor"): LineItem[] 
         const name = cleanText(it.name, "Item name", 120, 1);
         if (name === null) throw new HttpError(422, "invalid_item", `Item ${i + 1}: choose a product or type a name`);
         if (out.unit_price_kobo === undefined) throw new HttpError(422, "invalid_item", `Item ${i + 1}: enter a price`);
+        if (it.unit_cost_kobo !== undefined && it.unit_cost_kobo !== null) {
+          out.unit_cost_kobo = kobo(it.unit_cost_kobo, `Item ${i + 1} cost`);
+        }
         out.name = name;
       }
     } else if (!out.product_id) {
@@ -188,7 +192,11 @@ export function parseOrderItemPrices(body: Record<string, unknown>) {
     const order_item_id = uuid(item.order_item_id, `items[${index}].order_item_id`);
     if (seen.has(order_item_id)) throw new HttpError(422, "invalid_order_prices", "An item price was included more than once.");
     seen.add(order_item_id);
-    return { order_item_id, unit_price_kobo: kobo(item.unit_price_kobo, `Item ${index + 1} agreed price`) };
+    const unit_price_kobo = kobo(item.unit_price_kobo, `Item ${index + 1} agreed price`);
+    if (Object.prototype.hasOwnProperty.call(item, "unit_cost_kobo")) {
+      return { order_item_id, unit_price_kobo, unit_cost_kobo: item.unit_cost_kobo === null ? null : kobo(item.unit_cost_kobo, `Item ${index + 1} cost`) };
+    }
+    return { order_item_id, unit_price_kobo };
   });
   return { order_id, items };
 }
@@ -206,6 +214,7 @@ const RPC_ERRORS: Record<string, [number, string, string]> = {
   overpayment: [409, "overpayment", "That is more than the customer still owes."],
   agreed_prices_below_paid: [409, "agreed_prices_below_paid", "The agreed item prices can't total less than the amount already paid."],
   invalid_order_prices: [422, "invalid_order_prices", "Please enter a valid agreed price for each item."],
+  invalid_order_cost: [422, "invalid_order_cost", "Enter a valid unit cost for each item, or leave it blank if unknown."],
   invalid_order_total: [422, "invalid_order_total", "The agreed order total must be greater than zero."],
   order_item_not_found: [404, "order_item_not_found", "One of these items no longer belongs to this order."],
   order_has_no_items: [409, "order_has_no_items", "This order has no items to update."],

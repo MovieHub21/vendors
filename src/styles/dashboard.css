@@ -95,12 +95,26 @@
 .dash-store .share-actions { margin: 16px 22px 0; }
 .dash-store-note { margin: 18px 22px 0; padding: 12px 0 16px; border-top: 1px solid var(--color-line); color: var(--color-muted); font-size: 12px; line-height: 1.5; }
 .btn-small { padding: 7px 10px; font-size: 12px; }
+.dash-sales-periods { display: flex; justify-content: flex-end; gap: 4px; margin: 0 0 10px; }
+.dash-sales-periods button { border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-page); color: var(--color-muted); padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.dash-sales-periods button.is-active { border-color: var(--color-accent); background: var(--color-accent); color: #fff; }
+.dash-sales-periods button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .stat-grid-dash { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
 .stat-tile { display: flex; flex-direction: column; gap: 6px; padding: 16px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-page); }
 a.stat-tile:hover { border-color: var(--color-accent); }
 .stat-tile span { font-size: 12px; color: var(--color-muted); font-weight: 600; }
 .stat-tile strong { font: 800 20px var(--font-display); letter-spacing: -0.5px; }
 .stat-tile small { font-size: 11px; color: var(--color-muted); }
+.profit-loss-metrics { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.profit-loss-method { max-width: 900px; line-height: 1.65; margin: 0 0 16px; }
+.profit-loss-expenses-head { justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.profit-loss-expenses-head h2 { margin: 0; }
+.profit-loss-expenses-head p { margin: 4px 0 0; }
+.profit-loss-expense-form { max-width: 760px; padding: 16px; margin: 0 0 16px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-band); }
+.profit-loss-expense-list > li { align-items: center; }
+.profit-loss-expense-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.profit-loss-expense-actions .icon-btn { margin: 0; }
+.sale-line-cost-hint { display: block; margin: -4px 0 12px; }
 .dash-list { list-style: none; margin: 0; padding: 0; }
 .dash-list > li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--color-line); }
 .dash-list > li:last-child { border-bottom: 0; }
@@ -149,6 +163,7 @@ a.stat-tile:hover { border-color: var(--color-accent); }
 .sale-line { display: grid; grid-template-columns: 1fr 80px 140px 40px; gap: 10px; align-items: start; padding: 12px; border: 1px solid var(--color-line); border-radius: 12px; }
 .sale-line .field { margin-bottom: 0; }
 .sale-line .field input + input, .sale-line .field select + input { margin-top: 8px; }
+.sale-line-cost-hint { display: block; margin: -8px 0 12px; }
 .icon-btn { margin-top: 24px; height: 42px; border: 1px solid var(--color-line); border-radius: 10px; background: var(--color-page); color: var(--color-muted); cursor: pointer; }
 .sale-total { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px; border-radius: 12px; background: var(--color-band); }
 .sale-total span { display: block; font-size: 12px; color: var(--color-muted); }
@@ -397,7 +412,7 @@ a.stat-tile:hover { border-color: var(--color-accent); }
   .vendor-sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; width: min(84vw, 310px); height: 100vh; height: 100dvh; padding: 14px 14px calc(18px + env(safe-area-inset-bottom)); overflow-y: auto; border-right: 1px solid var(--color-line); transform: translateX(-102%); visibility: hidden; transition: transform .25s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .25s; }
   .vendor-sidebar.is-open { transform: none; visibility: visible; transition-delay: 0s; box-shadow: 18px 0 50px rgb(0 0 0 / 22%); }
   .vendor-sidebar-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 18px 4px; }
-  .vendor-scrim { position: fixed; inset: 0; z-index: 45; background: rgb(11 18 31 / 52%); animation: vendor-scrim-in .2s ease-out; }
+  .vendor-scrim { display: block; position: fixed; inset: 0; z-index: 45; background: rgb(11 18 31 / 38%); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: vendor-scrim-in .2s ease-out; }
   .vendor-nav-link { min-height: 46px; font-size: 15px; }
   .vendor-record-sale { min-height: 48px; font-size: 15px; }
   .vendor-logout { padding: 16px 0 4px; font-size: 15px; }
@@ -461,7 +476,7 @@ a.stat-tile:hover { border-color: var(--color-accent); }
 .vendor-topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .vendor-menu-btn { display: none; place-items: center; width: 44px; height: 44px; margin-left: -8px; border: 0; border-radius: 12px; background: transparent; color: var(--color-ink); cursor: pointer; }
 .vendor-menu-btn:hover { background: var(--color-band); }
-.vendor-sidebar-head, .vendor-scrim { display: none; }
+.vendor-sidebar-head { display: none; }
 @media (max-width: 640px) { .vendor-sidebar-head { display: flex; } .vendor-sidebar-close { margin-left: 0; } }
 @keyframes vendor-scrim-in { from { opacity: 0; } }
 @media (min-width: 641px) { .vendor-scrim { display: none !important; } }
@@ -475,6 +490,7 @@ a.stat-tile:hover { border-color: var(--color-accent); }
   .vendor-sidebar-close { display: grid; width: 40px; height: 40px; margin: 0; border-radius: 10px; background: transparent; color: var(--color-ink); }
   .vendor-sidebar-close:hover { background: var(--color-band); filter: none; }
 }
+:root[data-theme="dark"] .vendor-topbar .vendor-menu-btn { color: #000; }
 
 /* Payment notice: shown above every dashboard page, even when the store is offline. */
 .billing-banner {

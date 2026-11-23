@@ -6,7 +6,7 @@ import { parseProduct, uniqueSlug } from "../_shared/products.ts";
 import { uuid } from "../_shared/sales.ts";
 import { requireVendor } from "../_shared/vendor.ts";
 
-const COLUMNS = "id, slug, name, description, price_kobo, category, status, is_available, stock_quantity, created_at, updated_at";
+const COLUMNS = "id, slug, name, description, price_kobo, unit_cost_kobo, category, status, is_available, stock_quantity, created_at, updated_at";
 
 Deno.serve(
   route(["POST"], async (req) => {

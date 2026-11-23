@@ -24,6 +24,7 @@ export const NOINDEX_ROUTES = [
   "/onboarding/payment",
 
   "/dashboard",
+  "/dashboard/profit-loss",
   "/dashboard/seo",
   "/dashboard/sale",
   "/dashboard/orders",

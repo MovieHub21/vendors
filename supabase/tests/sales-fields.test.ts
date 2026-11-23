@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { HttpError } from "../functions/_shared/http.ts";
+import { parseExpense, parseReportPeriod } from "../functions/_shared/finance.ts";
 import { parseProduct, slugify, uniqueSlug } from "../functions/_shared/products.ts";
 import {
   parseItems,
@@ -159,7 +160,30 @@ describe("products", () => {
     expect(code(() => parseProduct({ images: ["http://cdn.example.com/a.jpg"] }, false))).toBe("422:invalid_input");
     expect(code(() => parseProduct({ images: ["https://localhost/a.jpg"] }, false))).toBe("422:invalid_input");
   });
+  it("accepts an optional product unit cost", () => {
+    expect(parseProduct({ name: "Wig", price_kobo: 4_500_000, unit_cost_kobo: 2_000_000 }, true).unit_cost_kobo).toBe(2_000_000);
+    expect(parseProduct({ unit_cost_kobo: null }, false).unit_cost_kobo).toBeNull();
+    expect(code(() => parseProduct({ unit_cost_kobo: -1 }, false))).toBe("422:invalid_input");
+  });
   it("rejects markup in text", () => {
     expect(code(() => parseProduct({ name: "<script>", price_kobo: 100 }, true))).toBe("422:invalid_input");
+  });
+});
+
+describe("profit and loss input", () => {
+  it("accepts only supported report periods", () => {
+    expect(parseReportPeriod("today")).toBe("today");
+    expect(parseReportPeriod("month")).toBe("month");
+    expect(parseReportPeriod("all_time")).toBe("all_time");
+    expect(code(() => parseReportPeriod("year"))).toBe("422:invalid_input");
+  });
+
+  it("validates expense amount, category, text and date", () => {
+    const today = new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 10);
+    expect(parseExpense({ amount_kobo: 50_000, category: "packaging", description: "Delivery bags", incurred_on: today }))
+      .toMatchObject({ amount_kobo: 50_000, category: "packaging", description: "Delivery bags", incurred_on: today, id: null });
+    expect(code(() => parseExpense({ amount_kobo: 0, category: "packaging", description: "Bags", incurred_on: today }))).toBe("422:invalid_input");
+    expect(code(() => parseExpense({ amount_kobo: 50_000, category: "salary", description: "Bags", incurred_on: today }))).toBe("422:invalid_input");
+    expect(code(() => parseExpense({ amount_kobo: 50_000, category: "packaging", description: "Bags", incurred_on: "2026-02-30" }))).toBe("422:invalid_input");
   });
 });

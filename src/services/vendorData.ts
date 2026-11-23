@@ -21,7 +21,7 @@ export interface OrderRow {
 export interface OrderDetail extends OrderRow {
   notes: string | null;
   delivery_address: string | null;
-  items: { id: string; product_name: string; variant: string | null; unit_price_kobo: number; quantity: number; line_total_kobo: number }[];
+  items: { id: string; product_name: string; variant: string | null; unit_price_kobo: number; unit_cost_kobo: number | null; quantity: number; line_total_kobo: number }[];
   payments: { id: string; amount_kobo: number; method: string; source: "manual" | "paystack"; note: string | null; recorded_at: string }[];
 }
 export interface CustomerRow {
@@ -42,6 +42,7 @@ export interface ProductRow {
   name: string;
   description: string;
   price_kobo: number;
+  unit_cost_kobo: number | null;
   category: string | null;
   status: "draft" | "published" | "archived";
   is_available: boolean;
@@ -79,7 +80,7 @@ export async function getOrder(id: string): Promise<Result<OrderDetail>> {
   if (!supabase) return fail("not_configured", NOT_CONFIGURED);
   const [order, items, payments] = await Promise.all([
     supabase.from("orders").select(`${ORDER_COLUMNS}, notes, delivery_address`).eq("id", id).maybeSingle(),
-    supabase.from("order_items").select("id, product_name, variant, unit_price_kobo, quantity, line_total_kobo").eq("order_id", id).order("line_total_kobo", { ascending: false }),
+    supabase.from("order_items").select("id, product_name, variant, unit_price_kobo, unit_cost_kobo, quantity, line_total_kobo").eq("order_id", id).order("line_total_kobo", { ascending: false }),
     supabase.from("order_payments").select("id, amount_kobo, method, source, note, recorded_at").eq("order_id", id).order("recorded_at"),
   ]);
   if (order.error || items.error || payments.error) return fail("request_failed", FAILED);
@@ -101,7 +102,7 @@ export async function listProducts(): Promise<Result<ProductRow[]>> {
   if (!supabase) return fail("not_configured", NOT_CONFIGURED);
   const { data, error } = await supabase
     .from("products")
-    .select("id, slug, name, description, price_kobo, category, status, is_available, stock_quantity, product_images(url, alt_text, position)")
+    .select("id, slug, name, description, price_kobo, unit_cost_kobo, category, status, is_available, stock_quantity, product_images(url, alt_text, position)")
     .order("created_at", { ascending: false })
     .limit(1000);
   return error ? fail("request_failed", FAILED) : ok((data ?? []) as unknown as ProductRow[]);

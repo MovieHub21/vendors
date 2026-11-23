@@ -55,6 +55,7 @@ Deno.serve(
         slug: uniqueSlug(name, slugs.data.map((r) => r.slug as string)),
         description: p.description,
         price_kobo: p.price_kobo,
+        unit_cost_kobo: p.unit_cost_kobo,
         category: p.category,
         stock_quantity: p.stock_quantity,
         is_available: p.is_available,

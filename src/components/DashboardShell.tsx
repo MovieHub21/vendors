@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { FileDown, LayoutDashboard, LayoutTemplate, LogOut, Menu, Package, Plus, Receipt, Search, Store, Users, Wallet, ClipboardList, MessageCircle, Palette, X, type LucideIcon } from "lucide-react";
+import { BarChart3, FileDown, LayoutDashboard, LayoutTemplate, LogOut, Menu, Package, Plus, Receipt, Search, Store, Users, Wallet, ClipboardList, MessageCircle, Palette, X, type LucideIcon } from "lucide-react";
 import { Alert } from "./AuthLayout";
 import { Seo } from "./Seo";
 import type { PageSeo } from "../lib/seo";
@@ -24,7 +24,7 @@ export function VendorPageLoading({ title, path }: { title: string; path: string
   return (
     <section className="vendor-app vendor-app-loading" role="status" aria-label={`Loading ${title.toLowerCase()}`}>
       <span className="sr-only">Loading {title.toLowerCase()}…</span>
-      <header className="vendor-topbar"><div className="vendor-topbar-inner"><span className="vendor-brand"><img src="/logo-icon.jpg" alt="Sellsharp" className="vendor-brand-logo" /></span><div className="vendor-topbar-tools"><SkeletonPulse style={{ width: 76, height: 12 }} /><SkeletonPulse style={{ width: 32, height: 32, borderRadius: 99 }} /></div></div></header>
+      <header className="vendor-topbar"><div className="vendor-topbar-inner"><span className="vendor-brand"><img src="/logo-icon.png" alt="Sellsharp" className="vendor-brand-logo" /></span><div className="vendor-topbar-tools"><SkeletonPulse style={{ width: 76, height: 12 }} /><SkeletonPulse style={{ width: 32, height: 32, borderRadius: 99 }} /></div></div></header>
       <div className="vendor-layout">
         <aside className="vendor-sidebar vendor-sidebar-loading" aria-hidden="true"><SkeletonPulse style={{ width: 66, height: 9, margin: "3px 10px 8px" }} />{Array.from({ length: 6 }, (_, i) => <SkeletonPulse className="vendor-nav-skeleton" key={i} style={{ width: i === 1 ? "84%" : "72%" }} />)}<SkeletonPulse style={{ width: 54, height: 9, margin: "18px 10px 8px" }} />{Array.from({ length: 3 }, (_, i) => <SkeletonPulse className="vendor-nav-skeleton" key={`store-${i}`} style={{ width: "76%" }} />)}</aside>
         <main className="vendor-main"><div className="vendor-main-inner">
@@ -44,6 +44,7 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: Luc
     label: "Workspace",
     items: [
       { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+      { to: "/dashboard/profit-loss", label: "Profit & loss", icon: BarChart3 },
       { to: "/dashboard/orders", label: "Orders", icon: ClipboardList },
       { to: "/dashboard/products", label: "Products", icon: Package },
       { to: "/dashboard/customers", label: "Customers", icon: Users },
@@ -115,7 +116,7 @@ export function DashboardShell({
                 {menuOpen ? <X size={21} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
               </button>
               <Link to="/dashboard" className="vendor-brand" aria-label="Sellsharp dashboard">
-                <img src="/logo-icon.jpg" alt="Sellsharp" className="vendor-brand-logo" />
+                <img src="/logo-icon.png" alt="Sellsharp" className="vendor-brand-logo" />
               </Link>
             </div>
             <div className="vendor-topbar-tools">
@@ -133,7 +134,7 @@ export function DashboardShell({
           {menuOpen && <div className="vendor-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
           <aside id="vendor-sidebar" className={`vendor-sidebar${menuOpen ? " is-open" : ""}`} onClick={(e) => { if ((e.target as HTMLElement).closest("a")) setMenuOpen(false); }}>
             <div className="vendor-sidebar-head">
-              <span className="vendor-brand"><img src="/logo-icon.jpg" alt="Sellsharp" className="vendor-brand-logo" /></span>
+              <span className="vendor-brand"><img src="/logo-icon.png" alt="Sellsharp" className="vendor-brand-logo" /></span>
               <button type="button" className="vendor-menu-btn vendor-sidebar-close" aria-label="Close menu" onClick={() => setMenuOpen(false)}><X size={22} aria-hidden="true" /></button>
             </div>
             <nav className="vendor-sidebar-nav" aria-label="Vendor workspace">

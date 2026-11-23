@@ -16,9 +16,10 @@ interface Line {
   name: string;
   qty: string;
   price: string; // naira text
+  cost: string; // optional naira text for custom items only
 }
 let nextKey = 1;
-const blank = (): Line => ({ key: nextKey++, productId: "", name: "", qty: "1", price: "" });
+const blank = (): Line => ({ key: nextKey++, productId: "", name: "", qty: "1", price: "", cost: "" });
 
 function SaleForm() {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ function SaleForm() {
 
   function pick(key: number, productId: string) {
     const p = products.find((x) => x.id === productId);
-    setLines((ls) => ls.map((l) => (l.key === key ? { ...l, productId, name: p?.name ?? "", price: p ? koboToInput(p.price_kobo) : l.price } : l)));
+    setLines((ls) => ls.map((l) => (l.key === key ? { ...l, productId, name: p?.name ?? "", price: p ? koboToInput(p.price_kobo) : l.price, cost: p?.unit_cost_kobo == null ? "" : koboToInput(p.unit_cost_kobo) } : l)));
   }
   const patch = (key: number, change: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...change } : l)));
 
@@ -84,9 +85,11 @@ function SaleForm() {
     for (const [i, l] of parsed.entries()) {
       if (!Number.isInteger(l.qtyN) || l.qtyN < 1) return setError(`Line ${i + 1}: quantity must be a whole number, 1 or more.`);
       if (l.kobo === null) return setError(`Line ${i + 1}: enter a valid price, for example 25,000.`);
+      const costKobo = l.cost.trim() === "" ? null : nairaToKobo(l.cost);
+      if (!l.productId && l.cost.trim() !== "" && costKobo === null) return setError(`Line ${i + 1}: enter a valid unit cost, or leave it blank if unknown.`);
       if (l.productId) items.push({ product_id: l.productId, quantity: l.qtyN, unit_price_kobo: l.kobo });
       else if (l.name.trim().length < 1) return setError(`Line ${i + 1}: choose a product or type what you sold.`);
-      else items.push({ name: l.name.trim(), quantity: l.qtyN, unit_price_kobo: l.kobo });
+      else items.push({ name: l.name.trim(), quantity: l.qtyN, unit_price_kobo: l.kobo, ...(costKobo === null ? {} : { unit_cost_kobo: costKobo }) });
     }
     const paidKobo = nairaToKobo(paid || "0");
     if (paidKobo === null) return setError("Amount paid isn't valid. Use numbers only, or leave it empty if nothing was paid.");
@@ -226,7 +229,8 @@ function SaleForm() {
         </p>
       )}
       {lines.map((l, i) => (
-        <div className="sale-line" key={l.key}>
+        <div className="sale-line-group" key={l.key}>
+        <div className="sale-line">
           <div className="field">
             <label htmlFor={`p-${l.key}`}>Item {i + 1}</label>
             <select id={`p-${l.key}`} value={l.productId} onChange={(e) => pick(l.key, e.target.value)}>
@@ -246,6 +250,16 @@ function SaleForm() {
               <Trash2 size={16} aria-hidden="true" />
             </button>
           )}
+        </div>
+        {l.productId ? (
+          <p className="field-hint sale-line-cost-hint">
+            {products.find((product) => product.id === l.productId)?.unit_cost_kobo == null
+              ? "No product cost saved. Add it in Products to include this item in profit reports."
+              : `Unit cost from product: ${formatNaira(products.find((product) => product.id === l.productId)?.unit_cost_kobo ?? 0)}`}
+          </p>
+        ) : (
+          <Field label="Unit cost each (₦, optional)" inputMode="decimal" value={l.cost} onChange={(e) => patch(l.key, { cost: e.target.value })} hint="Used for profit reports. Leave blank if unknown." />
+        )}
         </div>
       ))}
       <button type="button" className="btn btn-outline" onClick={() => setLines((ls) => [...ls, blank()])}>

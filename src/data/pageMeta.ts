@@ -103,6 +103,12 @@ export const PAGE_META = {
     description: "Your SellSharp dashboard: sales today, pending orders, who owes you, low stock and shortcuts to record a sale or share your store.",
     path: "/dashboard",
   },
+  dashboardProfitLoss: {
+    title: "Profit and loss",
+    description: "Review sales revenue, product costs, operating expenses and estimated profit for your SellSharp business.",
+    path: "/dashboard/profit-loss",
+    crumb: "Profit & loss",
+  },
   dashboardExport: {
     title: "Export business data",
     description: "Download a readable PDF report of your store products, customers, orders, payments and receipts.",

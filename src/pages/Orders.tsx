@@ -16,12 +16,14 @@ function Detail({ id, storeName, onChanged }: { id: string; storeName: string; o
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [itemPrices, setItemPrices] = useState<Record<string, string>>({});
+  const [itemCosts, setItemCosts] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     const r = await getOrder(id);
     if (r.ok) {
       setOrder(r.data);
       setItemPrices(Object.fromEntries(r.data.items.map((item) => [item.id, koboToInput(item.unit_price_kobo)])));
+      setItemCosts(Object.fromEntries(r.data.items.map((item) => [item.id, item.unit_cost_kobo === null ? "" : koboToInput(item.unit_cost_kobo)])));
       setError(null);
     } else setError(r.message);
   }, [id]);
@@ -51,8 +53,12 @@ function Detail({ id, storeName, onChanged }: { id: string; storeName: string; o
     const prices = order.items.map((item) => ({
       order_item_id: item.id,
       unit_price_kobo: nairaToKobo(itemPrices[item.id] ?? koboToInput(item.unit_price_kobo)),
+      unit_cost_kobo: (itemCosts[item.id] ?? (item.unit_cost_kobo === null ? "" : koboToInput(item.unit_cost_kobo))).trim() === ""
+        ? null
+        : nairaToKobo(itemCosts[item.id] ?? koboToInput(item.unit_cost_kobo ?? 0)),
     }));
     if (prices.some((item) => item.unit_price_kobo === null)) return setError("Enter a valid agreed price for each item.");
+    if (prices.some((item) => item.unit_cost_kobo === null && (itemCosts[item.order_item_id] ?? "").trim() !== "")) return setError("Enter a valid unit cost for each item, or leave it blank if unknown.");
     const totalKobo = prices.reduce((sum, item, index) => sum + (item.unit_price_kobo ?? 0) * order.items[index].quantity, 0);
     if (totalKobo < 1) return setError("The agreed order total must be greater than zero.");
     if (totalKobo < order.paid_kobo) return setError(`The agreed prices can't total less than the ${formatNaira(order.paid_kobo)} already paid.`);
@@ -62,10 +68,11 @@ function Detail({ id, storeName, onChanged }: { id: string; storeName: string; o
     const result = await updateOrderItemPrices(order.id, prices.map((item) => ({
       order_item_id: item.order_item_id,
       unit_price_kobo: item.unit_price_kobo as number,
+      unit_cost_kobo: item.unit_cost_kobo,
     })));
     setBusy(false);
     if (!result.ok) return setError(result.message);
-    setNotice("Agreed item prices saved. The order total and balance due have been updated.");
+    setNotice("Item prices and costs saved. Cost values are private and used for profit reports.");
     await load();
     onChanged();
   }
@@ -83,6 +90,11 @@ function Detail({ id, storeName, onChanged }: { id: string; storeName: string; o
     ? null
     : previewLines.reduce((sum, line) => sum + (line.lineTotal ?? 0), 0);
   const itemPricesChanged = previewLines.some((line) => line.unitPrice !== line.item.unit_price_kobo);
+  const itemCostsChanged = order.items.some((item) => {
+    const raw = itemCosts[item.id] ?? (item.unit_cost_kobo === null ? "" : koboToInput(item.unit_cost_kobo));
+    const parsed = raw.trim() === "" ? null : nairaToKobo(raw);
+    return parsed !== item.unit_cost_kobo;
+  });
   const previewBelowPaid = previewTotal !== null && previewTotal < order.paid_kobo;
 
   return (
@@ -104,29 +116,30 @@ function Detail({ id, storeName, onChanged }: { id: string; storeName: string; o
       <form className="order-item-pricing" onSubmit={(event) => void saveItemPrices(event)}>
       <div className="order-items-scroll">
         <table className="dash-table">
-          <thead><tr><th>Item</th><th>Qty</th><th>Agreed unit price</th><th>Item total</th></tr></thead>
+          <thead><tr><th>Item</th><th>Qty</th><th>Agreed unit price</th><th>Unit cost (private)</th><th>Item total</th></tr></thead>
           <tbody>
             {previewLines.map(({ item, unitPrice, lineTotal }) => (
               <tr key={item.id}>
                 <td>{item.product_name}{item.variant ? ` (${item.variant})` : ""}</td>
                 <td>{item.quantity}</td>
                 <td><label className="sr-only" htmlFor={`agreed-price-${item.id}`}>Agreed unit price for {item.product_name} (₦)</label><input className="order-item-price-input" id={`agreed-price-${item.id}`} inputMode="decimal" value={itemPrices[item.id] ?? koboToInput(item.unit_price_kobo)} disabled={busy || cancelled} onChange={(event) => setItemPrices((current) => ({ ...current, [item.id]: event.target.value }))} /></td>
+                <td><label className="sr-only" htmlFor={`unit-cost-${item.id}`}>Unit cost for {item.product_name} (₦, private)</label><input className="order-item-price-input" id={`unit-cost-${item.id}`} inputMode="decimal" placeholder="Unknown" value={itemCosts[item.id] ?? (item.unit_cost_kobo === null ? "" : koboToInput(item.unit_cost_kobo))} disabled={busy || cancelled} onChange={(event) => setItemCosts((current) => ({ ...current, [item.id]: event.target.value }))} /></td>
                 <td>{lineTotal === null ? "—" : formatNaira(lineTotal)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
-            <tr><td colSpan={3}>New agreed total</td><td>{previewTotal === null ? "Check item prices" : formatNaira(previewTotal)}</td></tr>
-            <tr><td colSpan={3}>Paid so far</td><td>{formatNaira(order.paid_kobo)}</td></tr>
-            <tr><td colSpan={3}>New balance due</td><td><b>{previewTotal === null ? "—" : formatNaira(previewTotal - order.paid_kobo)}</b></td></tr>
+            <tr><td colSpan={4}>New agreed total</td><td>{previewTotal === null ? "Check item prices" : formatNaira(previewTotal)}</td></tr>
+            <tr><td colSpan={4}>Paid so far</td><td>{formatNaira(order.paid_kobo)}</td></tr>
+            <tr><td colSpan={4}>New balance due</td><td><b>{previewTotal === null ? "—" : formatNaira(previewTotal - order.paid_kobo)}</b></td></tr>
           </tfoot>
         </table>
       </div>
 
       {!cancelled && <div className="order-item-pricing-actions">
-        <p className="muted">Set the agreed price for each item. Changes apply to this order only; catalogue prices stay the same.</p>
+        <p className="muted">Set the agreed price and your internal unit cost. Costs are never shown to customers. Leave unknown costs blank; update them later when you know them.</p>
         {previewBelowPaid && <p className="order-price-warning">Item prices must total at least the {formatNaira(order.paid_kobo)} already paid.</p>}
-        <button className="btn btn-outline" type="submit" disabled={busy || !itemPricesChanged || previewTotal === null || previewTotal < 1 || previewBelowPaid}>{busy ? "Saving…" : "Save agreed prices"}</button>
+        <button className="btn btn-outline" type="submit" disabled={busy || (!itemPricesChanged && !itemCostsChanged) || previewTotal === null || previewTotal < 1 || previewBelowPaid}>{busy ? "Saving…" : "Save prices and costs"}</button>
       </div>}
       </form>
 

@@ -17,6 +17,7 @@ interface FormState {
   id?: string;
   name: string;
   price: string;
+  cost: string;
   description: string;
   category: string;
   stock: string; // "" = not tracked
@@ -24,12 +25,13 @@ interface FormState {
   published: boolean;
   images: string; // one address per line
 }
-const EMPTY: FormState = { name: "", price: "", description: "", category: "", stock: "", available: true, published: true, images: "" };
+const EMPTY: FormState = { name: "", price: "", cost: "", description: "", category: "", stock: "", available: true, published: true, images: "" };
 
 const fromRow = (p: ProductRow): FormState => ({
   id: p.id,
   name: p.name,
   price: koboToInput(p.price_kobo),
+  cost: p.unit_cost_kobo === null ? "" : koboToInput(p.unit_cost_kobo),
   description: p.description,
   category: p.category ?? "",
   stock: p.stock_quantity === null ? "" : String(p.stock_quantity),
@@ -183,6 +185,9 @@ function ProductForm({ initial, status, categories, onSaved, onCancel }: { initi
     if (addingCategory && !newCategory.trim()) return setError("Enter a name for the new category.");
     const price = nairaToKobo(f.price);
     if (!price || price < 1) return setError("Enter the price in naira, for example 25,000.");
+    const cost = f.cost.trim() === "" ? null : nairaToKobo(f.cost);
+    if (f.cost.trim() !== "" && cost === null) return setError("Enter a valid unit cost in naira, or leave it blank if unknown.");
+    if (cost !== null && cost > 2_000_000_000) return setError("Unit cost can't be more than ₦20,000,000.");
     let stock: number | null = null;
     if (f.stock.trim() !== "") {
       if (!/^\d{1,7}$/.test(f.stock.trim())) return setError("Stock must be a whole number, or leave it empty if you don't count stock.");
@@ -195,6 +200,7 @@ function ProductForm({ initial, status, categories, onSaved, onCancel }: { initi
       product_id: f.id,
       name: f.name.trim(),
       price_kobo: price,
+      unit_cost_kobo: cost,
       description: f.description.trim(),
       category: addingCategory
         ? categories.find((category) => category.toLowerCase() === newCategory.trim().toLowerCase()) ?? newCategory.trim()
@@ -216,18 +222,19 @@ function ProductForm({ initial, status, categories, onSaved, onCancel }: { initi
       <Field label="Product name" value={f.name} maxLength={120} onChange={(e) => set("name", e.target.value)} />
       <div className="field-row">
         <Field label="Price (₦)" inputMode="decimal" value={f.price} onChange={(e) => set("price", e.target.value)} />
-        <div className="field">
-          <label htmlFor="pf-category">Category (optional)</label>
-          <select id="pf-category" value={addingCategory ? "__new_category__" : f.category} onChange={(e) => {
-            if (e.target.value === "__new_category__") setAddingCategory(true);
-            else { setAddingCategory(false); set("category", e.target.value); setNewCategory(""); }
-          }}>
-            <option value="">No category</option>
-            {categoryOptions.map((category) => <option value={category} key={category}>{category}</option>)}
-            <option value="__new_category__">Add a new category…</option>
-          </select>
-          {addingCategory && <input className="new-category-input" aria-label="New category name" maxLength={40} value={newCategory} placeholder="Enter category name" onChange={(e) => setNewCategory(e.target.value)} />}
-        </div>
+        <Field label="Unit cost (₦, optional)" inputMode="decimal" value={f.cost} onChange={(e) => set("cost", e.target.value)} hint="Your cost per item; used for profit reports. Leave blank if unknown." />
+      </div>
+      <div className="field">
+        <label htmlFor="pf-category">Category (optional)</label>
+        <select id="pf-category" value={addingCategory ? "__new_category__" : f.category} onChange={(e) => {
+          if (e.target.value === "__new_category__") setAddingCategory(true);
+          else { setAddingCategory(false); set("category", e.target.value); setNewCategory(""); }
+        }}>
+          <option value="">No category</option>
+          {categoryOptions.map((category) => <option value={category} key={category}>{category}</option>)}
+          <option value="__new_category__">Add a new category…</option>
+        </select>
+        {addingCategory && <input className="new-category-input" aria-label="New category name" maxLength={40} value={newCategory} placeholder="Enter category name" onChange={(e) => setNewCategory(e.target.value)} />}
       </div>
       <div className="field">
         <label htmlFor="pf-desc">Description</label>
@@ -450,7 +457,7 @@ function ProductsView({ storeSlug }: { storeSlug: string }) {
                 </div>
                 <div className="product-info">
                   <b>{p.name}</b>
-                  <span>{formatNaira(p.price_kobo)} · {p.stock_quantity === null ? "stock not counted" : `${p.stock_quantity} in stock`}{outOfStock ? " · out of stock" : ""}</span>
+                  <span>{formatNaira(p.price_kobo)} · Cost {p.unit_cost_kobo === null ? "not set" : formatNaira(p.unit_cost_kobo)} · {p.stock_quantity === null ? "stock not counted" : `${p.stock_quantity} in stock`}{outOfStock ? " · out of stock" : ""}</span>
                   <small>{p.status === "published" ? "Visible in store" : p.status === "archived" ? "Hidden" : "Draft (not visible)"}{p.category ? ` · ${p.category}` : ""}</small>
                 </div>
                 <div className="product-actions">

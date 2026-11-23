@@ -10,7 +10,14 @@ import { methodLabel } from "../lib/sales";
 import { storePath } from "../lib/routes";
 import { SITE } from "../lib/site";
 import type { Me } from "../services/api";
-import { getDashboardSummary, type DashboardSummary } from "../services/sales";
+import { getDashboardSales, getDashboardSummary, type DashboardPeriodSummary, type DashboardSummary } from "../services/sales";
+
+type SalesPeriod = "today" | "month" | "all_time";
+const SALES_PERIODS: { id: SalesPeriod; label: string }[] = [
+  { id: "today", label: "Today" },
+  { id: "month", label: "This month" },
+  { id: "all_time", label: "All time" },
+];
 
 function Stat({ label, value, to, hint }: { label: string; value: string | number; to?: string; hint?: string }) {
   const body = (
@@ -32,6 +39,11 @@ function Stat({ label, value, to, hint }: { label: string; value: string | numbe
 function Overview({ me }: { me: Me }) {
   const [s, setS] = useState<DashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [salesPeriod, setSalesPeriod] = useState<SalesPeriod>("today");
+  const [salesByPeriod, setSalesByPeriod] = useState<Partial<Record<"month" | "all_time", DashboardPeriodSummary>>>({});
+  const [salesError, setSalesError] = useState<string | null>(null);
+  const [salesLoading, setSalesLoading] = useState(false);
+  const [salesRetry, setSalesRetry] = useState(0);
   useEffect(() => {
     let cancelled = false;
     void getDashboardSummary().then((r) => {
@@ -45,8 +57,29 @@ function Overview({ me }: { me: Me }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (salesPeriod === "today" || !s || salesByPeriod[salesPeriod] !== undefined) return;
+    let cancelled = false;
+    void getDashboardSales(salesPeriod).then((result) => {
+      if (cancelled) return;
+      if (result.ok) setSalesByPeriod((current) => ({ ...current, [salesPeriod]: result.data.sales }));
+      else setSalesError(result.message);
+    }).catch(() => {
+      if (!cancelled) setSalesError("We couldn't load this sales range. Please try again.");
+    }).finally(() => {
+      if (!cancelled) setSalesLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [s, salesByPeriod, salesPeriod, salesRetry]);
+
   const store = me.store!;
   const until = me.subscription ? new Date(me.subscription.current_period_end).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
+  const periodSummary = salesPeriod === "today" ? null : salesByPeriod[salesPeriod];
+  const displayedSales = salesPeriod === "today" ? s?.sales_today_kobo : periodSummary?.sales_kobo;
+  const displayedOrders = salesPeriod === "today" ? s?.orders_today : periodSummary?.total_orders;
+  const salesLabel = SALES_PERIODS.find((period) => period.id === salesPeriod)?.label ?? "Today";
 
   return (
     <>
@@ -54,14 +87,42 @@ function Overview({ me }: { me: Me }) {
       {!s && !error && <p className="auth-loading">Loading your figures…</p>}
       {s && (
         <>
+          <div className="dash-sales-periods" role="group" aria-label="Sales date range">
+            {SALES_PERIODS.map((period) => (
+              <button
+                key={period.id}
+                type="button"
+                className={salesPeriod === period.id ? "is-active" : ""}
+                aria-pressed={salesPeriod === period.id}
+                onClick={() => {
+                  setSalesError(null);
+                  setSalesLoading(period.id !== "today" && salesByPeriod[period.id] === undefined);
+                  setSalesPeriod(period.id);
+                  setSalesRetry((retry) => retry + 1);
+                }}
+              >
+                {period.label}
+              </button>
+            ))}
+          </div>
+          {salesError && (
+            <Alert kind="error">
+              {salesError} <button type="button" className="link-button" onClick={() => { setSalesError(null); setSalesLoading(true); setSalesRetry((retry) => retry + 1); }}>Try again</button>
+            </Alert>
+          )}
           <div className="stat-grid-dash">
-            <Stat label="Total sales" value={formatNaira(s.total_sales_kobo)} />
-            <Stat label="Sales today" value={formatNaira(s.sales_today_kobo)} />
-            <Stat label="Sales this month" value={formatNaira(s.sales_month_kobo)} />
+            <Stat
+              label={`Sales · ${salesLabel.toLowerCase()}`}
+              value={salesLoading ? "Loading…" : salesError ? "Unavailable" : displayedSales === undefined ? "—" : formatNaira(displayedSales)}
+            />
             <Stat label="Customers owe you" value={formatNaira(s.outstanding_kobo)} to="/dashboard/customers?owing=1" hint={`${s.debtors} customer${s.debtors === 1 ? "" : "s"}`} />
             <Stat label="Pending orders" value={s.pending_orders} to="/dashboard/orders?status=pending" hint="Waiting for you to confirm" />
             <Stat label="Awaiting delivery" value={s.awaiting_delivery} to="/dashboard/orders" />
-            <Stat label="Total orders" value={s.total_orders} to="/dashboard/orders" />
+            <Stat
+              label={`Total orders · ${salesLabel.toLowerCase()}`}
+              value={salesLoading ? "Loading…" : salesError ? "Unavailable" : displayedOrders === undefined ? "—" : displayedOrders}
+              to="/dashboard/orders"
+            />
             <Stat label="Customers" value={s.total_customers} to="/dashboard/customers" />
           </div>
 

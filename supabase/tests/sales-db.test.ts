@@ -303,14 +303,46 @@ describe("dashboard and customer figures", () => {
       `select coalesce(sum(total_kobo),0)::text as t, coalesce(sum(total_kobo-paid_kobo),0)::text as o from public.orders where store_id=$1 and status not in ('pending','cancelled')`,
       [store.a],
     );
-    expect(String(a.total_sales_kobo)).toBe(salesA.t);
+    expect(a.total_sales_kobo).toBeUndefined(); // Larger sales totals load only when a period is selected.
     expect(String(a.outstanding_kobo)).toBe(salesA.o);
-    expect(a.sales_today_kobo).toBe(a.total_sales_kobo); // everything in this test happened today
+    expect(String(a.sales_today_kobo)).toBe(salesA.t); // everything in this test happened today
     expect(Number(a.pending_orders)).toBeGreaterThan(0);
-    expect(b.total_sales_kobo).toBe(100_000); // vendor B's single sale only
+    expect(b.total_sales_kobo).toBeUndefined();
     expect((b.recent_orders as unknown[]).length).toBe(1);
     expect((a.low_stock as { name: string }[]).map((p) => p.name)).toContain("Sneakers");
     expect((a.low_stock as { name: string }[]).map((p) => p.name)).not.toContain("Gift wrap"); // untracked
+  });
+
+  it("loads selected sales periods and counts orders for this month and all time", async () => {
+    const month = await svc<{ sales_kobo: number; total_orders: number }>(`public.dashboard_sales_range($1,'month')`, [store.a]);
+    const all = await svc<{ sales_kobo: number; total_orders: number }>(`public.dashboard_sales_range($1,'all_time')`, [store.a]);
+    expect(month.sales_kobo).toBeGreaterThan(0);
+    expect(month.total_orders).toBeGreaterThan(0);
+    expect(all.sales_kobo).toBeGreaterThanOrEqual(month.sales_kobo);
+    expect(all.total_orders).toBeGreaterThanOrEqual(month.total_orders);
+  });
+});
+
+describe("profit and loss", () => {
+  it("snapshots product costs and includes operating expenses in the report", async () => {
+    const before = await svc<Record<string, number | null>>(`public.profit_loss_report($1,'all_time')`, [store.a]);
+    await db.query(`update public.products set unit_cost_kobo = 1200000 where id = $1`, [product.bag]);
+    const created = (await sale(store.a, {
+      customer: { name: "Profit Test", phone: "08033334444" },
+      items: [{ product_id: product.bag, quantity: 2 }],
+    })) as { order_id: string };
+    const item = await one<{ unit_cost_kobo: number; quantity: number }>(
+      `select unit_cost_kobo, quantity from public.order_items where order_id=$1`, [created.order_id],
+    );
+    expect(item).toEqual({ unit_cost_kobo: 1_200_000, quantity: 2 });
+
+    await db.query(`insert into public.business_expenses (store_id, amount_kobo, category, description) values ($1, 500000, 'packaging', 'Profit test expense')`, [store.a]);
+    const after = await svc<Record<string, number | null>>(`public.profit_loss_report($1,'all_time')`, [store.a]);
+    expect(Number(after.revenue_kobo) - Number(before.revenue_kobo)).toBe(5_000_000);
+    expect(Number(after.known_cogs_kobo) - Number(before.known_cogs_kobo)).toBe(2_400_000);
+    expect(Number(after.expenses_kobo) - Number(before.expenses_kobo)).toBe(500_000);
+    expect(after.gross_profit_kobo).toBeNull(); // Older lines have no known cost and are flagged as incomplete.
+    expect(Number(after.missing_cost_items)).toBe(Number(before.missing_cost_items));
   });
 });
 
