@@ -11,7 +11,7 @@ export function Footer() {
       <div className="container footer-main">
         <div className="footer-brand-col">
           <Link to="/" className="brand brand-footer">
-            <img src="/logo-icon.jpg" alt="Sellsharp" className="brand-logo-img" />
+            <img src="/logo-icon.png" alt="Sellsharp" className="brand-logo-img" />
           </Link>
           <p>Less order stress. More time to grow your business.</p>
           <span className="footer-location">Made for ambitious businesses in Nigeria.</span>

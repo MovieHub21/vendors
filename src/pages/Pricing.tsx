@@ -58,9 +58,9 @@ export default function Pricing() {
             <div className="plan-price">
               ₦3,000 <small>/ month</small>
             </div>
-            <p>For vendors ready to run their business with more clarity.</p>
+            <p>Try every feature free for 7 days. No card required. Subscribe only when you're ready.</p>
             <Link to="/signup" className="btn btn-primary btn-full">
-              Get started <ArrowRight size={16} />
+              Start your free 7-day trial <ArrowRight size={16} />
             </Link>
             <div className="plan-divider" />
             <b className="included-title">What's included</b>
@@ -72,7 +72,7 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <small className="plan-footnote">Subscription payments will be processed securely through Paystack.</small>
+            <small className="plan-footnote">After your trial, continue for ₦3,000/month. No automatic charge during the trial. Payments are processed securely through Paystack.</small>
           </div>
         </div>
       </section>

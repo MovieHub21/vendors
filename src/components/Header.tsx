@@ -12,7 +12,7 @@ export function Header() {
     <header className="site-header">
       <div className="nav-wrap container">
         <Link to="/" className="brand" onClick={close}>
-          <img src="/logo-icon.jpg" alt="Sellsharp" className="brand-logo-img" />
+          <img src="/logo-icon.png" alt="Sellsharp" className="brand-logo-img" />
         </Link>
         <nav className={`nav-links ${open ? "nav-open" : ""}`}>
           <NavLink to="/features" onClick={close}>

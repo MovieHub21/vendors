@@ -116,8 +116,8 @@ export interface SubscriptionSummary {
 }
 /** Renewal state, shown on the dashboard even when the subscription has ended. */
 export interface Billing {
-  /** renewal_failed: the card couldn't be charged · expired: the paid period ended · active: all good */
-  state: "active" | "renewal_failed" | "expired";
+  /** trialing: no payment due yet · renewal_failed: the card couldn't be charged · expired: access ended */
+  state: "trialing" | "trial_expired" | "active" | "renewal_failed" | "expired";
   auto_renew: boolean;
   period_end: string;
   failed_at: string | null;
@@ -165,7 +165,7 @@ const MESSAGES: Record<string, string> = {
 
   nothing_to_update: "There were no changes to save.",
   body_too_large: "That request was too large.",
-  subscription_required: "Your subscription has ended, so you can view your records but not change them. Renew to continue.",
+  subscription_required: "Your trial or subscription has ended, so you can view your records but not change them. Subscribe to continue.",
   store_suspended: "Your store is suspended. Please contact support.",
   insufficient_stock: "There isn't enough stock for one of these products.",
   product_not_found: "That product wasn't found in your catalogue.",

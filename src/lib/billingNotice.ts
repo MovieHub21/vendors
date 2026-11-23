@@ -1,10 +1,10 @@
 import type { Me } from "../services/api";
 
 export interface BillingNotice {
-  kind: "renewal_failed" | "expired" | "ending_soon";
+  kind: "trialing" | "trial_expired" | "renewal_failed" | "expired" | "ending_soon";
   title: string;
   body: string;
-  action: "update_card" | "renew";
+  action: "update_card" | "renew" | "subscribe";
 }
 
 const DAY = 86_400_000;
@@ -17,6 +17,25 @@ export function billingNotice(me: Me, now = Date.now()): BillingNotice | null {
   if (!b) return null; // never subscribed (onboarding handles that), or the billing update isn't deployed yet
   const end = new Date(b.period_end).getTime();
   const live = me.subscription?.active === true;
+
+  if (b.state === "trialing" && live) {
+    const days = Math.max(1, Math.ceil((end - now) / DAY));
+    return {
+      kind: "trialing",
+      title: `${days} ${days === 1 ? "day" : "days"} left in your free trial`,
+      body: `Your SellSharp trial ends on ${fmt(b.period_end)}. You won't be charged unless you choose to subscribe.`,
+      action: "subscribe",
+    };
+  }
+
+  if (b.state === "trial_expired") {
+    return {
+      kind: "trial_expired",
+      title: "Your free trial has ended",
+      body: "Your store is offline and changes are locked. Subscribe for ₦3,000/month to continue. Your products and records are safe.",
+      action: "subscribe",
+    };
+  }
 
   if (b.state === "renewal_failed") {
     const reason = b.failure_reason ? `${b.failure_reason.replace(/[.\s]+$/, "")}. ` : "";

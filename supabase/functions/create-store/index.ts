@@ -33,7 +33,7 @@ Deno.serve(
         city: input.city,
         state: input.state,
         contact_phone: phone,
-        is_published: false, // goes live when the first payment is confirmed
+        is_published: false, // the database starts the trial and publishes the store after setup
       })
       .select(COLUMNS)
       .single();

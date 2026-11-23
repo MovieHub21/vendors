@@ -4,7 +4,7 @@ import { adminClient, requireUser, route } from "../_shared/runtime.ts";
 export type NextStep = "create_store" | "subscribe" | "done";
 
 const BASE_SUB = "plan_code, status, current_period_end";
-const BILLING_SUB = `${BASE_SUB}, auto_renew, renewal_failed_at, renewal_failure_reason`;
+const BILLING_SUB = `${BASE_SUB}, auto_renew, renewal_failed_at, renewal_failure_reason, trial_ends_at`;
 
 Deno.serve(
   route(["GET", "POST"], async (req) => {
@@ -32,7 +32,7 @@ Deno.serve(
     if (sub.error) throw sub.error;
     const account = await db.from("billing_accounts").select("paystack_subscription_code").eq("owner_id", user.id).maybeSingle();
 
-    const active = sub.data?.status === "active" && new Date(sub.data.current_period_end).getTime() > Date.now();
+    const active = (sub.data?.status === "active" || sub.data?.status === "trialing") && new Date(sub.data.current_period_end).getTime() > Date.now();
     const next_step: NextStep = !store.data ? "create_store" : !active ? "subscribe" : "done";
 
     return {
@@ -43,7 +43,15 @@ Deno.serve(
       billing: sub.data
         ? {
             // renewal_failed: the card could not be charged · expired: the paid period ended · active: all good
-            state: sub.data.renewal_failed_at ? "renewal_failed" : active ? "active" : "expired",
+            state: sub.data.renewal_failed_at
+              ? "renewal_failed"
+              : active && sub.data.status === "trialing"
+                ? "trialing"
+                : !active && sub.data.trial_ends_at
+                  ? "trial_expired"
+                  : active
+                    ? "active"
+                    : "expired",
             auto_renew: sub.data.auto_renew === true,
             period_end: sub.data.current_period_end,
             failed_at: sub.data.renewal_failed_at ?? null,

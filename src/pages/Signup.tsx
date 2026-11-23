@@ -65,7 +65,7 @@ export default function Signup() {
   return (
     <>
       <Seo seo={{ ...PAGE_META.signup, noindex: true }} />
-      <AuthLayout title="Create your store" subtitle="Start with your account. Your store link comes next.">
+      <AuthLayout title="Create your store" subtitle="Start your free 7-day trial. No card required.">
         <form onSubmit={onSubmit} noValidate>
           <Field
             label="Full name"

@@ -23,12 +23,12 @@ export async function requireVendor(req: Request, { needsSubscription = true } =
   if (sub.error) throw new HttpError(500, "internal_error", sub.error.message);
   if (!store.data) throw new HttpError(409, "store_required", "Create your store first.");
   if (store.data.status === "suspended") throw new HttpError(403, "store_suspended", "Your store is suspended.");
-  const active = sub.data?.status === "active" && new Date(sub.data.current_period_end).getTime() > Date.now();
+  const active = (sub.data?.status === "active" || sub.data?.status === "trialing") && new Date(sub.data.current_period_end).getTime() > Date.now();
   if (needsSubscription && !active) {
     throw new HttpError(
       402,
       "subscription_required",
-      "Your subscription has ended, so you can view your records but not change them. Renew to continue.",
+      "Your trial or subscription has ended, so you can view your records but not change them. Subscribe to continue.",
     );
   }
   return { user, store: { id: store.data.id, slug: store.data.slug, name: store.data.name } };

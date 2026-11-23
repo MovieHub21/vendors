@@ -19,7 +19,7 @@ supabase/
 
 (Prefer the CLI? `supabase link --project-ref <ref>` then `supabase db push` applies `migrations/` instead.)
 
-Optional, once: **Database → Extensions → enable `pg_cron`**, then run the commented `cron.schedule(...)` line at the bottom of `migrations/…0400_billing.sql`. It takes stores offline when a subscription lapses.
+Before launch: **Database → Extensions → enable `pg_cron`**, then schedule `public.expire_lapsed_subscriptions()` daily (the commented `cron.schedule(...)` line at the bottom of `migrations/…0400_billing.sql` is an example). It takes stores offline when a trial or subscription ends. API writes are also blocked as soon as the end time passes.
 
 ## 2. Configure Auth
 
@@ -52,6 +52,8 @@ supabase functions deploy me check-slug create-store update-store-seo subscripti
 4. Try a payment with Paystack's [test cards](https://paystack.com/docs/payments/test-payments/). The store should go live. Go live later by swapping in the live key and live webhook URL.
 
 _Automatic monthly renewal (optional):_ create a Plan in Paystack for ₦3,000/month, then `supabase secrets set PAYSTACK_PLAN_CODE=PLN_xxx`. Without it, vendors pay each month and the period is extended by 30 days.
+
+New vendors receive a 7-day trial after completing store setup. When the trial migration is first applied, existing stores with no successful payment also receive a fresh 7-day trial. No card is collected and no payment is taken during the trial. The dashboard shows the remaining time and asks the vendor to subscribe when ready; after expiry, business changes are locked and the storefront is taken offline by the daily scheduled job. A successful payment starts the paid month at the payment confirmation time.
 
 ## 5. Connect the website
 

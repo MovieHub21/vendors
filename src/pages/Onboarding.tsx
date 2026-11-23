@@ -271,8 +271,8 @@ export default function Onboarding() {
       <Seo seo={{ ...PAGE_META.onboarding, noindex: true }} />
       <AuthLayout
         wide
-        title={step === 1 ? "Set up your store" : "Start your subscription"}
-        subtitle={step === 1 ? "Choose how customers will find you." : "One simple plan. Cancel anytime."}
+        title={step === 1 ? "Set up your store" : "Choose a plan"}
+        subtitle={step === 1 ? "Choose how customers will find you. Your 7-day free trial starts when your store is ready." : "Your free trial has ended. Subscribe to keep using SellSharp."}
       >
         <Steps current={step} />
         {error && <Alert kind="error">{error}</Alert>}

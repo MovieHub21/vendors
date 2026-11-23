@@ -9,7 +9,7 @@ export const FAQS: ReadonlyArray<readonly [question: string, answer: string]> = 
   ],
   [
     "How much does it cost?",
-    "The planned subscription is ₦3,000 per month. The pricing page explains what is included.",
+    "SellSharp is free for your first 7 days, with no card required. After the trial, you can subscribe for ₦3,000 per month. You won't be charged unless you choose to subscribe.",
   ],
   [
     "Can customers order without creating an account?",

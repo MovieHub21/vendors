@@ -1385,68 +1385,6 @@ begin
 end;
 $$;
 
--- ---------------------------------------------------------------- vendor: set agreed prices for each item on one order
-create or replace function public.set_order_item_prices(p_store_id uuid, p_order_id uuid, p_items jsonb)
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  o public.orders;
-  entry jsonb;
-  item_id uuid;
-  unit_price numeric;
-  item_count integer;
-  submitted_count integer;
-  unique_count integer;
-  new_total bigint;
-begin
-  if p_items is null or jsonb_typeof(p_items) is distinct from 'array' then
-    raise exception 'invalid_order_prices';
-  end if;
-  if jsonb_array_length(p_items) < 1 or jsonb_array_length(p_items) > 50 then
-    raise exception 'invalid_order_prices';
-  end if;
-  select * into o from public.orders where id = p_order_id and store_id = p_store_id for update;
-  if not found then raise exception 'order_not_found'; end if;
-  if o.status = 'cancelled' then raise exception 'order_cancelled'; end if;
-
-  select count(*) into item_count from public.order_items where order_id = o.id;
-  select count(*), count(distinct value ->> 'order_item_id') into submitted_count, unique_count
-    from jsonb_array_elements(p_items);
-  if item_count = 0 or submitted_count <> item_count or unique_count <> item_count then
-    raise exception 'invalid_order_prices';
-  end if;
-
-  for entry in select value from jsonb_array_elements(p_items) loop
-    if jsonb_typeof(entry) is distinct from 'object' or jsonb_typeof(entry -> 'order_item_id') is distinct from 'string'
-       or jsonb_typeof(entry -> 'unit_price_kobo') is distinct from 'number' then
-      raise exception 'invalid_order_prices';
-    end if;
-    item_id := (entry ->> 'order_item_id')::uuid;
-    unit_price := (entry ->> 'unit_price_kobo')::numeric;
-    if unit_price <> trunc(unit_price) or unit_price < 0 or unit_price > 10000000000 then
-      raise exception 'invalid_order_prices';
-    end if;
-    update public.order_items set unit_price_kobo = unit_price::bigint,
-      line_total_kobo = unit_price::bigint * quantity
-      where id = item_id and order_id = o.id;
-    if not found then raise exception 'order_item_not_found'; end if;
-  end loop;
-
-  select coalesce(sum(line_total_kobo), 0)::bigint into new_total from public.order_items where order_id = o.id;
-  if new_total <= 0 then raise exception 'invalid_order_total'; end if;
-  if new_total < o.paid_kobo then raise exception 'agreed_prices_below_paid'; end if;
-
-  update public.orders set total_kobo = new_total where id = o.id;
-  perform private.refresh_order_payment(o.id);
-  select * into o from public.orders ord where ord.id = o.id;
-  return jsonb_build_object('order_id', o.id, 'total_kobo', o.total_kobo, 'paid_kobo', o.paid_kobo,
-    'outstanding_kobo', o.total_kobo - o.paid_kobo, 'payment_status', o.payment_status);
-end;
-$$;
-
 -- ---------------------------------------------------------------- vendor: generate (or re-issue) a receipt
 -- First call creates revision 1 and a receipt number. Calling again with nothing changed returns the same receipt.
 -- When the paid amount or total has changed since the latest revision, a NEW revision is added (same receipt number);
@@ -1585,7 +1523,6 @@ revoke all on function
   public.record_sale(uuid, uuid, jsonb, jsonb, text, bigint, text, text),
   public.set_order_status(uuid, uuid, text),
   public.record_order_payment(uuid, uuid, bigint, text, text),
-  public.set_order_item_prices(uuid, uuid, jsonb),
   public.generate_receipt(uuid, uuid),
   public.dashboard_summary(uuid, integer)
   from public, anon, authenticated;
@@ -1594,7 +1531,6 @@ grant execute on function
   public.record_sale(uuid, uuid, jsonb, jsonb, text, bigint, text, text),
   public.set_order_status(uuid, uuid, text),
   public.record_order_payment(uuid, uuid, bigint, text, text),
-  public.set_order_item_prices(uuid, uuid, jsonb),
   public.generate_receipt(uuid, uuid),
   public.dashboard_summary(uuid, integer)
   to service_role;
@@ -2635,3 +2571,306 @@ grant execute on function public.link_billing_account(uuid, text, text) to servi
 grant execute on function public.apply_renewal_payment(text, text, boolean, text, integer, text, bigint, text, timestamptz) to service_role;
 grant execute on function public.record_renewal_failure(text, text, boolean, text, text) to service_role;
 grant execute on function public.record_subscription_state(text, text, boolean, text, text) to service_role;
+
+-- ============================================================
+-- 20261115000000_free_trial.sql
+-- ============================================================
+-- SellSharp · seven-day vendor trial
+-- A trial starts only after the vendor has verified their account and completed store setup.
+
+alter table public.subscriptions drop constraint if exists subscriptions_status_check;
+alter table public.subscriptions
+  add constraint subscriptions_status_check check (status in ('trialing', 'active', 'expired', 'cancelled'));
+alter table public.subscriptions
+  add column if not exists trial_started_at timestamptz,
+  add column if not exists trial_ends_at timestamptz;
+
+create or replace function public.start_store_trial()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.subscriptions (owner_id, plan_code, status, current_period_start, current_period_end, trial_started_at, trial_ends_at)
+  values (new.owner_id, 'monthly', 'trialing', now(), now() + interval '7 days', now(), now() + interval '7 days')
+  on conflict (owner_id) do nothing;
+
+  update public.stores set is_published = true where id = new.id;
+  return new;
+end;
+$$;
+
+drop trigger if exists stores_start_trial on public.stores;
+create trigger stores_start_trial
+  after insert on public.stores
+  for each row execute function public.start_store_trial();
+
+-- Also enroll vendors who created their store before this migration was installed.
+-- A prior successful payment excludes the account, so this cannot grant an old subscriber a second trial.
+insert into public.subscriptions (
+  owner_id, plan_code, status, current_period_start, current_period_end, trial_started_at, trial_ends_at
+)
+select s.owner_id, 'monthly', 'trialing', now(), now() + interval '7 days', now(), now() + interval '7 days'
+from public.stores s
+where s.status = 'active'
+  and not exists (
+    select 1 from public.subscriptions sub where sub.owner_id = s.owner_id
+  )
+  and not exists (
+    select 1 from public.payments p where p.owner_id = s.owner_id and p.status = 'success'
+  )
+on conflict (owner_id) do nothing;
+
+update public.stores s
+   set is_published = true
+ where s.status = 'active'
+   and exists (
+     select 1 from public.subscriptions sub
+      where sub.owner_id = s.owner_id and sub.status = 'trialing' and sub.current_period_end > now()
+   );
+
+-- A checkout made during a trial starts the paid period when payment is confirmed;
+-- the customer is not charged during the trial and is not billed retroactively for it.
+create or replace function public.apply_successful_payment(
+  p_reference      text,
+  p_amount_kobo    integer,
+  p_currency       text,
+  p_transaction_id bigint,
+  p_channel        text,
+  p_paid_at        timestamptz
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  pay  public.payments;
+  plan public.subscription_plans;
+  base timestamptz;
+  sub  public.subscriptions;
+begin
+  select * into pay from public.payments where reference = p_reference for update;
+  if not found then
+    raise exception 'payment_not_found' using errcode = 'P0002';
+  end if;
+
+  if pay.status = 'success' then
+    return jsonb_build_object('already_applied', true, 'owner_id', pay.owner_id);
+  end if;
+
+  select * into plan from public.subscription_plans where code = pay.plan_code;
+  if pay.amount_kobo <> p_amount_kobo or pay.currency <> p_currency or p_amount_kobo <> plan.price_kobo then
+    raise exception 'payment_mismatch' using errcode = '22023';
+  end if;
+
+  update public.payments
+     set status = 'success',
+         paystack_transaction_id = p_transaction_id,
+         channel = p_channel,
+         paid_at = coalesce(p_paid_at, now())
+   where id = pay.id;
+
+  select * into sub from public.subscriptions where owner_id = pay.owner_id for update;
+  base := case
+    when found and sub.status <> 'trialing' and sub.current_period_end > now() then sub.current_period_end
+    else now()
+  end;
+
+  insert into public.subscriptions (owner_id, plan_code, status, current_period_start, current_period_end)
+  values (pay.owner_id, plan.code, 'active', base, base + make_interval(months => plan.interval_months))
+  on conflict (owner_id) do update
+    set plan_code = excluded.plan_code,
+        status = 'active',
+        current_period_start = excluded.current_period_start,
+        current_period_end = excluded.current_period_end,
+        trial_started_at = null,
+        trial_ends_at = null,
+        renewal_failed_at = null,
+        renewal_failure_reason = null
+  returning * into sub;
+
+  update public.stores set is_published = true where owner_id = pay.owner_id and status = 'active';
+
+  return jsonb_build_object(
+    'already_applied', false,
+    'owner_id', pay.owner_id,
+    'current_period_end', sub.current_period_end
+  );
+end;
+$$;
+
+revoke all on function public.apply_successful_payment(text, integer, text, bigint, text, timestamptz)
+  from public, anon, authenticated;
+grant execute on function public.apply_successful_payment(text, integer, text, bigint, text, timestamptz)
+  to service_role;
+
+create or replace function public.expire_lapsed_subscriptions()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  n integer;
+begin
+  with lapsed as (
+    update public.subscriptions
+       set status = 'expired'
+     where status in ('active', 'trialing') and current_period_end <= now()
+    returning owner_id
+  ), hidden as (
+    update public.stores s set is_published = false
+      from lapsed l where s.owner_id = l.owner_id
+    returning s.id
+  )
+  select count(*) into n from lapsed;
+  return n;
+end;
+$$;
+
+revoke all on function public.expire_lapsed_subscriptions() from public, anon, authenticated;
+grant execute on function public.expire_lapsed_subscriptions() to service_role;
+
+-- ============================================================
+-- 20261116000000_agreed_order_totals.sql
+-- ============================================================
+-- Initial per-order agreed-total implementation. The next migration replaces this with item-level prices.
+create or replace function public.set_order_agreed_total(p_store_id uuid, p_order_id uuid, p_total_kobo bigint)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  o public.orders;
+  source_total numeric;
+  item_count integer;
+begin
+  if p_total_kobo is null or p_total_kobo <= 0 or p_total_kobo > 10000000000 then
+    raise exception 'invalid_order_total';
+  end if;
+  select * into o from public.orders where id = p_order_id and store_id = p_store_id for update;
+  if not found then raise exception 'order_not_found'; end if;
+  if o.status = 'cancelled' then raise exception 'order_cancelled'; end if;
+  if p_total_kobo < o.paid_kobo then raise exception 'agreed_total_below_paid'; end if;
+  select coalesce(sum(line_total_kobo), 0), count(*) into source_total, item_count
+    from public.order_items where order_id = o.id;
+  if item_count = 0 or source_total <= 0 then raise exception 'order_has_no_items'; end if;
+
+  with source as (
+    select id, quantity, line_total_kobo, sum(line_total_kobo) over () as weight_total,
+           row_number() over (order by id) as row_num, count(*) over () as row_count
+      from public.order_items where order_id = o.id
+  ), shares as (
+    select id, quantity,
+           case when row_num = row_count then p_total_kobo - coalesce(
+             sum(floor(p_total_kobo::numeric * line_total_kobo / weight_total))
+               over (order by row_num rows between unbounded preceding and 1 preceding), 0)
+           else floor(p_total_kobo::numeric * line_total_kobo / weight_total)
+           end::bigint as agreed_line_total
+      from source
+  )
+  update public.order_items i set line_total_kobo = s.agreed_line_total,
+    unit_price_kobo = round(s.agreed_line_total::numeric / s.quantity)::bigint
+    from shares s where i.id = s.id;
+
+  update public.orders set total_kobo = p_total_kobo where id = o.id;
+  perform private.refresh_order_payment(o.id);
+  select * into o from public.orders ord where ord.id = o.id;
+  return jsonb_build_object('order_id', o.id, 'total_kobo', o.total_kobo, 'paid_kobo', o.paid_kobo,
+    'outstanding_kobo', o.total_kobo - o.paid_kobo, 'payment_status', o.payment_status);
+end;
+$$;
+
+revoke all on function public.set_order_agreed_total(uuid, uuid, bigint) from public, anon, authenticated;
+grant execute on function public.set_order_agreed_total(uuid, uuid, bigint) to service_role;
+
+-- ============================================================
+-- 20261116000100_order_item_agreed_prices.sql
+-- ============================================================
+-- Let vendors set a separate agreed unit price for each item on a single order.
+-- Order item snapshots and totals change; catalogue product prices do not.
+drop function if exists public.set_order_agreed_total(uuid, uuid, bigint);
+
+create or replace function public.set_order_item_prices(
+  p_store_id uuid,
+  p_order_id uuid,
+  p_items jsonb
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  o public.orders;
+  entry jsonb;
+  item_id uuid;
+  unit_price numeric;
+  item_count integer;
+  submitted_count integer;
+  unique_count integer;
+  new_total bigint;
+begin
+  if p_items is null or jsonb_typeof(p_items) is distinct from 'array' then
+    raise exception 'invalid_order_prices';
+  end if;
+  if jsonb_array_length(p_items) < 1 or jsonb_array_length(p_items) > 50 then
+    raise exception 'invalid_order_prices';
+  end if;
+
+  select * into o from public.orders
+   where id = p_order_id and store_id = p_store_id
+   for update;
+  if not found then raise exception 'order_not_found'; end if;
+  if o.status = 'cancelled' then raise exception 'order_cancelled'; end if;
+
+  select count(*) into item_count from public.order_items where order_id = o.id;
+  select count(*), count(distinct value ->> 'order_item_id')
+    into submitted_count, unique_count
+    from jsonb_array_elements(p_items);
+  if item_count = 0 or submitted_count <> item_count or unique_count <> item_count then
+    raise exception 'invalid_order_prices';
+  end if;
+
+  for entry in select value from jsonb_array_elements(p_items) loop
+    if jsonb_typeof(entry) is distinct from 'object'
+       or jsonb_typeof(entry -> 'order_item_id') is distinct from 'string'
+       or jsonb_typeof(entry -> 'unit_price_kobo') is distinct from 'number' then
+      raise exception 'invalid_order_prices';
+    end if;
+    item_id := (entry ->> 'order_item_id')::uuid;
+    unit_price := (entry ->> 'unit_price_kobo')::numeric;
+    if unit_price <> trunc(unit_price) or unit_price < 0 or unit_price > 10000000000 then
+      raise exception 'invalid_order_prices';
+    end if;
+
+    update public.order_items
+       set unit_price_kobo = unit_price::bigint,
+           line_total_kobo = unit_price::bigint * quantity
+     where id = item_id and order_id = o.id;
+    if not found then raise exception 'order_item_not_found'; end if;
+  end loop;
+
+  select coalesce(sum(line_total_kobo), 0)::bigint into new_total
+    from public.order_items where order_id = o.id;
+  if new_total <= 0 then raise exception 'invalid_order_total'; end if;
+  if new_total < o.paid_kobo then raise exception 'agreed_prices_below_paid'; end if;
+
+  update public.orders set total_kobo = new_total where id = o.id;
+  perform private.refresh_order_payment(o.id);
+  select * into o from public.orders ord where ord.id = o.id;
+  return jsonb_build_object(
+    'order_id', o.id,
+    'total_kobo', o.total_kobo,
+    'paid_kobo', o.paid_kobo,
+    'outstanding_kobo', o.total_kobo - o.paid_kobo,
+    'payment_status', o.payment_status
+  );
+end;
+$$;
+
+revoke all on function public.set_order_item_prices(uuid, uuid, jsonb) from public, anon, authenticated;
+grant execute on function public.set_order_item_prices(uuid, uuid, jsonb) to service_role;

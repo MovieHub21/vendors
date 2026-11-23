@@ -47,7 +47,9 @@ export function BillingBanner({ me }: { me: Me }) {
           ? "Opening Paystack…"
           : notice.action === "update_card"
             ? "Update card"
-            : `Renew now · ${formatNaira(SITE.monthlyPriceKobo)}`}
+            : notice.action === "subscribe"
+              ? `Subscribe · ${formatNaira(SITE.monthlyPriceKobo)}/month`
+              : `Renew now · ${formatNaira(SITE.monthlyPriceKobo)}`}
       </button>
     </section>
   );
