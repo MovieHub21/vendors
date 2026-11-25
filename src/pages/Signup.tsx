@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../auth/useAuth";
 import { Alert, AuthLayout } from "../components/AuthLayout";
 import { Field } from "../components/Field";
@@ -12,7 +12,9 @@ import { signUp } from "../services/auth";
 export default function Signup() {
   const navigate = useNavigate();
   const { status } = useAuth();
-  const [form, setForm] = useState({ fullName: "", email: "", password: "" });
+  const [form, setForm] = useState({ fullName: "", email: "", password: "", confirmPassword: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string | null>>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -28,12 +30,13 @@ export default function Signup() {
       fullName: validateFullName(form.fullName),
       email: validateEmail(form.email),
       password: validatePassword(form.password),
+      confirmPassword: form.password === form.confirmPassword ? null : "Passwords do not match.",
     };
     setErrors(next);
     setFormError(null);
-    if (next.fullName || next.email || next.password) return;
+    if (next.fullName || next.email || next.password || next.confirmPassword) return;
     setBusy(true);
-    const result = await signUp(form);
+    const result = await signUp({ fullName: form.fullName, email: form.email, password: form.password });
     setBusy(false);
     if (!result.ok) return setFormError(result.message);
     if (result.data.needsEmailConfirmation) setConfirmEmail(form.email.trim());
@@ -84,12 +87,42 @@ export default function Signup() {
           />
           <Field
             label="Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoComplete="new-password"
             value={form.password}
             onChange={set("password")}
             error={errors.password}
             hint={`At least ${PASSWORD_MIN} characters, with a letter and a number.`}
+            trailingAction={
+              <button
+                className="field-visibility-toggle"
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
+          />
+          <Field
+            label="Confirm password"
+            type={showConfirmPassword ? "text" : "password"}
+            autoComplete="new-password"
+            value={form.confirmPassword}
+            onChange={set("confirmPassword")}
+            error={errors.confirmPassword}
+            trailingAction={
+              <button
+                className="field-visibility-toggle"
+                type="button"
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                aria-pressed={showConfirmPassword}
+                onClick={() => setShowConfirmPassword((visible) => !visible)}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
           />
           {formError && <Alert kind="error">{formError}</Alert>}
           <button className="btn btn-primary btn-full" type="submit" disabled={busy}>

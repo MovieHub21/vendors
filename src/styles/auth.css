@@ -61,6 +61,35 @@
   color: var(--color-ink);
   font: 500 15px var(--font-body);
 }
+.field-input-action {
+  position: relative;
+}
+.field-input-action input {
+  padding-right: 46px;
+}
+.field-visibility-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+.field-visibility-toggle:hover {
+  color: var(--color-ink);
+}
+.field-visibility-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
 .phone-number-control { display: grid; grid-template-columns: minmax(150px, .9fr) minmax(0, 1.1fr); gap: 8px; }
 .phone-number-control select { min-width: 0; padding: 0 9px; font-size: 13px; }
 .phone-number-control input { min-width: 0; }

@@ -5,17 +5,19 @@ interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
   error?: string | null;
   hint?: ReactNode;
   prefix?: string;
+  trailingAction?: ReactNode;
 }
 
-export function Field({ label, error, hint, prefix, className, ...input }: FieldProps) {
+export function Field({ label, error, hint, prefix, trailingAction, className, ...input }: FieldProps) {
   const id = useId();
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
   return (
     <div className={`field${error ? " field-invalid" : ""}${className ? ` ${className}` : ""}`}>
       <label htmlFor={id}>{label}</label>
-      <div className={prefix ? "field-prefixed" : undefined}>
+      <div className={trailingAction ? "field-input-action" : prefix ? "field-prefixed" : undefined}>
         {prefix && <span aria-hidden="true">{prefix}</span>}
         <input id={id} aria-invalid={error ? true : undefined} aria-describedby={describedBy} {...input} />
+        {trailingAction}
       </div>
       {error ? (
         <small id={`${id}-error`} className="field-error">
