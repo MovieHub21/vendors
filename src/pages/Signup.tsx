@@ -15,10 +15,16 @@ export default function Signup() {
   const [form, setForm] = useState({ fullName: "", email: "", password: "", confirmPassword: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string | null>>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState<string | null>(null);
+  const confirmPasswordError = confirmPasswordTouched
+    ? form.confirmPassword === form.password
+      ? null
+      : "Passwords must match."
+    : errors.confirmPassword;
 
   if (status === "signedIn" && !confirmEmail) return <Navigate to="/onboarding" replace />;
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -30,7 +36,7 @@ export default function Signup() {
       fullName: validateFullName(form.fullName),
       email: validateEmail(form.email),
       password: validatePassword(form.password),
-      confirmPassword: form.password === form.confirmPassword ? null : "Passwords do not match.",
+      confirmPassword: form.password === form.confirmPassword ? null : "Passwords must match.",
     };
     setErrors(next);
     setFormError(null);
@@ -110,8 +116,11 @@ export default function Signup() {
             type={showConfirmPassword ? "text" : "password"}
             autoComplete="new-password"
             value={form.confirmPassword}
-            onChange={set("confirmPassword")}
-            error={errors.confirmPassword}
+            onChange={(event) => {
+              set("confirmPassword")(event);
+              setConfirmPasswordTouched(true);
+            }}
+            error={confirmPasswordError}
             trailingAction={
               <button
                 className="field-visibility-toggle"
