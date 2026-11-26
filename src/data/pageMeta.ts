@@ -21,9 +21,9 @@ export const PAGE_META = {
     crumb: "Features",
   },
   pricing: {
-    title: "Pricing: ₦100/month, Everything Included",
+    title: "Pricing: ₦3,000/month, Everything Included",
     description:
-      "One simple SellSharp plan at ₦100 per month: storefront, orders, customer records, receipts, invoices, debt tracking and WhatsApp sharing.",
+      "One simple SellSharp plan at ₦3,000 per month: storefront, orders, customer records, receipts, invoices, debt tracking and WhatsApp sharing.",
     path: "/pricing",
     crumb: "Pricing",
   },

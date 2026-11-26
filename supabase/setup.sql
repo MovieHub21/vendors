@@ -3294,10 +3294,10 @@ revoke all on function public.profit_loss_report(uuid, text) from public, anon, 
 grant execute on function public.profit_loss_report(uuid, text) to service_role;
 
 -- ============================================================
--- 20261126000100_temporary_test_subscription_price.sql
+-- 202611260001001_temporary_test_subscription_price.sql
 -- ============================================================
 -- Temporary live-payment test price: ₦100 (10,000 kobo).
 -- Restore to 300,000 kobo after the live payment check.
 update public.subscription_plans
-   set price_kobo = 10000
+   set price_kobo = 300000
  where code = 'monthly';

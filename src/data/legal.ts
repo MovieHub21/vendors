@@ -38,7 +38,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
   ],
   [
     "Subscriptions",
-    "New vendors receive a 7-day free trial after completing store setup. No payment method is required and no payment is taken during the trial. During the live payment test, vendors may subscribe for ₦100 per month. A subscription is billed when the vendor chooses to pay; any automatic renewal is disclosed at checkout and can be cancelled.",
+    "New vendors receive a 7-day free trial after completing store setup. No payment method is required and no payment is taken during the trial. After the trial, vendors may subscribe for ₦3,000 per month. A subscription is billed when the vendor chooses to pay; any automatic renewal is disclosed at checkout and can be cancelled.",
   ],
   [
     "Orders and payments",

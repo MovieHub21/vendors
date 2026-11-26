@@ -36,7 +36,7 @@ export default function Features() {
             <em>before you spend 1 kobo.</em>
           </>
         }
-        body="Sellsharp gives Nigerian social media and WhatsApp sellers an organized online storefront, inventory manager, point-of-sale debt tracker, and branded digital receipts — for ₦100/month during our live payment test."
+        body="Sellsharp gives Nigerian social media and WhatsApp sellers an organized online storefront, inventory manager, point-of-sale debt tracker, and branded digital receipts — for just ₦3,000/month."
       />
 
       {/* Main Interactive Desktop Demo Section */}
@@ -201,7 +201,7 @@ export default function Features() {
                   </td>
                   <td className="td-new">
                     <CheckCircle2 size={15} className="icon-good" />
-                    <span><strong>0% commission.</strong> ₦100/month during our live payment test. Every naira you make is 100% yours.</span>
+                    <span><strong>0% commission.</strong> Flat ₦3,000/month. Every naira you make is 100% yours.</span>
                   </td>
                 </tr>
               </tbody>
@@ -215,7 +215,7 @@ export default function Features() {
         <div className="container">
           <div className="section-head text-center">
             <span className="eyebrow">COMPREHENSIVE TOOLKIT</span>
-            <h2>Everything Included In Your ₦100 Test Plan</h2>
+            <h2>Everything Included In Your ₦3,000 Plan</h2>
             <p className="section-lead">
               No hidden tiers or locked features. When you subscribe, every tool is unlocked immediately.
             </p>
@@ -274,7 +274,7 @@ export default function Features() {
           <p>Join hundreds of smart Nigerian sellers organizing their sales, orders, and debts with Sellsharp.</p>
           <div className="final-cta-buttons">
             <Link to="/signup" className="btn btn-primary btn-large">
-              Create your store for ₦100/mo during our live payment test <ArrowRight size={17} />
+              Create your store for ₦3,000/mo <ArrowRight size={17} />
             </Link>
             <Link to="/pricing" className="btn btn-quiet">
               Review pricing details
