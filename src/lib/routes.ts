@@ -31,6 +31,7 @@ export const NOINDEX_ROUTES = [
   "/dashboard/customers",
   "/dashboard/products",
   "/dashboard/support",
+  "/dashboard/profile",
   "/dashboard/receipt",
   "/dashboard/invoice",
   "/dashboard/templates",

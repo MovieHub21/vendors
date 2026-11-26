@@ -6,6 +6,7 @@ import { REDIRECT_ROUTES } from "./lib/routes";
 import About from "./pages/About";
 import AdminConsole from "./pages/AdminConsole";
 import VendorSupport from "./pages/VendorSupport";
+import VendorProfile from "./pages/VendorProfile";
 import Contact from "./pages/Contact";
 
 import Customers from "./pages/Customers";
@@ -168,6 +169,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <VendorSupport />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard/profile"
+            element={
+              <RequireAuth>
+                <VendorProfile />
               </RequireAuth>
             }
           />
