@@ -219,6 +219,8 @@ export async function call<T>(name: string, body?: Record<string, unknown>): Pro
 }
 
 export const getMe = () => call<Me>("me");
+export const updateProfile = (input: { phone: string | null }) =>
+  call<{ profile: { full_name: string; phone: string | null } }>("update-profile", input);
 export const checkSlug = (slug: string) =>
   call<{ slug: string; available: boolean; reason?: string }>("check-slug", { slug });
 export const createStore = (input: StoreInput) => call<{ store: StoreSummary }>("create-store", { ...input });

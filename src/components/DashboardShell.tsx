@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { BarChart3, FileDown, LayoutDashboard, LayoutTemplate, LogOut, Menu, Package, Plus, Receipt, Search, Store, Users, Wallet, ClipboardList, MessageCircle, Palette, X, UserRound, type LucideIcon } from "lucide-react";
+import { BarChart3, FileDown, LayoutDashboard, LayoutTemplate, LogOut, Menu, Package, Plus, Receipt, Search, Store, Users, Wallet, ClipboardList, MessageCircle, Palette, X, type LucideIcon } from "lucide-react";
 import { Alert } from "./AuthLayout";
 import { Seo } from "./Seo";
 import type { PageSeo } from "../lib/seo";
@@ -52,7 +52,6 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: Luc
       { to: "/dashboard/receipts", label: "Receipts", icon: Receipt },
       { to: "/dashboard/export", label: "Export data", icon: FileDown },
       { to: "/dashboard/support", label: "Contact support", icon: MessageCircle },
-      { to: "/dashboard/profile", label: "Profile", icon: UserRound },
     ],
   },
   {

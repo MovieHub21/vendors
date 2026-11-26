@@ -1,13 +1,45 @@
 import { ExternalLink, Settings2, Store, UserRound, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
+import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { Alert } from "../components/AuthLayout";
 import { DashboardShell } from "../components/DashboardShell";
+import { Field } from "../components/Field";
 import { PAGE_META } from "../data/pageMeta";
 import { storePath } from "../lib/routes";
-import type { Me } from "../services/api";
+import { updateProfile, type Me } from "../services/api";
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return <div className="vendor-profile-detail"><span>{label}</span><strong>{children || "Not added"}</strong></div>;
+}
+
+function AccountPhoneForm({ initialPhone }: { initialPhone: string | null }) {
+  const [phone, setPhone] = useState(initialPhone ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    setSaved(false);
+    const result = await updateProfile({ phone: phone.trim() || null });
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setPhone(result.data.profile.phone ?? "");
+    setSaved(true);
+  }
+
+  return <form className="vendor-profile-phone-form" onSubmit={(event) => void submit(event)}>
+    <Field label="Phone number" type="tel" autoComplete="tel" maxLength={30} value={phone} onChange={(event) => { setPhone(event.target.value); setSaved(false); }} hint="Used as your account contact number." />
+    {error && <Alert kind="error">{error}</Alert>}
+    {saved && <Alert kind="success">Phone number saved.</Alert>}
+    <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "Saving…" : "Save phone number"}</button>
+  </form>;
 }
 
 function ProfileContent({ me }: { me: Me }) {
@@ -21,7 +53,7 @@ function ProfileContent({ me }: { me: Me }) {
     [store.other_social_label || "Other social link", store.other_social_url],
   ].filter((entry): entry is [string, string] => Boolean(entry[1])) : [];
   const renews = subscription?.current_period_end ?? billing?.period_end;
-  const billingState = billing?.state?.replaceAll("_", " ") ?? subscription?.status ?? "No subscription";
+  const billingState = billing?.state?.replace(/_/g, " ") ?? subscription?.status ?? "No subscription";
 
   return <div className="vendor-profile-page">
     <section className="dash-card vendor-profile-card">
@@ -29,8 +61,8 @@ function ProfileContent({ me }: { me: Me }) {
       <div className="vendor-profile-grid">
         <Detail label="Full name">{me.profile?.full_name?.trim()}</Detail>
         <Detail label="Email address">{me.user.email}</Detail>
-        <Detail label="Phone number">{me.profile?.phone}</Detail>
       </div>
+      <AccountPhoneForm initialPhone={me.profile?.phone ?? null} />
     </section>
 
     <section className="dash-card vendor-profile-card">
