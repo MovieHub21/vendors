@@ -1,24 +1,34 @@
 // POST /functions/v1/paystack-webhook — called by Paystack, not by browsers (verify_jwt = false in config.toml).
-// Security: (1) HMAC signature on the raw body, (2) successful charges are re-verified with Paystack's API,
+// Security: (1) Paystack-Signature on the raw body (legacy header supported during migration),
+// (2) successful charges are re-verified with Paystack's API,
 // (3) Postgres re-checks the amount against the plan price, (4) every delivery is logged, (5) every handler is idempotent.
 //
 // In Paystack → Settings → API Keys & Webhooks, this URL receives all events. The ones that matter:
 //   charge.success · invoice.payment_failed · subscription.create · subscription.not_renew · subscription.disable
 import { handlePaystackEvent, billingDeps } from "../_shared/confirm.ts";
 import { json } from "../_shared/http.ts";
-import { verifyPaystackSignature } from "../_shared/paystack.ts";
+import { verifyPaystackSignature, verifyPaystackWebhookSignature } from "../_shared/paystack.ts";
 import { adminClient, env } from "../_shared/runtime.ts";
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-  const raw = await req.text();
-  const valid = await verifyPaystackSignature(raw, req.headers.get("x-paystack-signature"), env("PAYSTACK_SECRET_KEY"));
+  const raw = new Uint8Array(await req.arrayBuffer());
+  const webhookHeader = req.headers.get("paystack-signature");
+  // Paystack's current signing secret (whsec_...) signs `timestamp.rawBody`.
+  // Fall back to the older API-secret signature only for deliveries without the new header.
+  const valid = webhookHeader
+    ? await verifyPaystackWebhookSignature(raw, webhookHeader, Deno.env.get("PAYSTACK_WEBHOOK_SECRET") ?? "")
+    : await verifyPaystackSignature(
+      raw,
+      req.headers.get("x-paystack-signature"),
+      env("PAYSTACK_SECRET_KEY"),
+    );
   if (!valid) return json({ error: "invalid_signature" }, 401);
 
   let event: { event?: string; data?: { reference?: string } };
   try {
-    event = JSON.parse(raw);
+    event = JSON.parse(new TextDecoder().decode(raw));
   } catch {
     return json({ error: "invalid_json" }, 400);
   }

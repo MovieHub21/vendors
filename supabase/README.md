@@ -46,10 +46,11 @@ supabase functions deploy me check-slug create-store update-store-seo subscripti
 
 ## 4. Paystack
 
-1. Paystack dashboard → **Settings → API Keys & Webhooks** (stay in **Test mode** at first).
-2. Set the **Test Webhook URL** to `https://YOUR-PROJECT-REF.supabase.co/functions/v1/paystack-webhook`.
-3. Put the test secret key in `PAYSTACK_SECRET_KEY` (step 3).
-4. Try a payment with Paystack's [test cards](https://paystack.com/docs/payments/test-payments/). The store should go live. Go live later by swapping in the live key and live webhook URL.
+1. In Paystack's test mode, set the **Test Webhook URL** to `https://janiopabgzhielzjloem.supabase.co/functions/v1/paystack-webhook`.
+2. Set `PAYSTACK_SECRET_KEY` to the test API secret (`sk_test_…`) for Paystack API calls. Set `PAYSTACK_WEBHOOK_SECRET` to the test-mode webhook signing secret (`whsec_…`) from **Developers → API configuration → Webhook signing secret**.
+3. Paystack's current `Paystack-Signature` header is verified against the raw request body and timestamp using `PAYSTACK_WEBHOOK_SECRET`. The older `x-paystack-signature` header is accepted only when the current header is absent, to allow migration. Keep the API secret configured for transaction verification and as the fallback until Paystack sends the current header.
+4. The checkout return/callback URL is `https://sellsharp.ng/onboarding/payment` (derived from `SITE_URL`). Try a payment with Paystack's [test cards](https://paystack.com/docs/payments/test-payments/).
+5. To go live, switch Paystack to Live mode and set the **Live Webhook URL** to `https://janiopabgzhielzjloem.supabase.co/functions/v1/paystack-webhook`, then configure `PAYSTACK_SECRET_KEY` with the live API secret (`sk_live_…`) and `PAYSTACK_WEBHOOK_SECRET` with the live-mode webhook signing secret. The test and live secrets are distinct. Deploy the updated secrets with `supabase secrets set --env-file supabase/functions/.env` and keep `PAYSTACK_SECRET_KEY` until you have confirmed that live webhook deliveries include `Paystack-Signature`.
 
 _Automatic monthly renewal (optional):_ create a Plan in Paystack for ₦3,000/month, then `supabase secrets set PAYSTACK_PLAN_CODE=PLN_xxx`. Without it, vendors pay each month and the period is extended by 30 days.
 
@@ -77,7 +78,7 @@ All functions need `Authorization: Bearer <user session token>` (the website add
 - **Row Level Security** on every table. Browsers can `select` their own rows only; there are no insert/update/delete policies, and those privileges are also revoked. The public sees only `public_stores` (published, active stores; never the owner id).
 - **The service/secret key lives only in edge-function secrets.** The website uses the publishable key.
 - **Payments are never trusted from the browser or the webhook body.** Every confirmation is re-checked with Paystack's API, then Postgres compares the amount and currency to the stored payment _and_ the plan price (`apply_successful_payment`). Applying the same reference twice changes nothing.
-- **Webhook signature** (HMAC-SHA512, constant-time) is required; every delivery is logged once in `webhook_events`.
+- **Webhook signature** (`Paystack-Signature`, timestamped HMAC-SHA512 with the mode-specific webhook signing secret, constant-time) is required; legacy `x-paystack-signature` is supported during migration. Every delivery is logged once in `webhook_events`.
 - **Store usernames** are enforced in the database (format, reserved words, unique, frozen after creation), so no client or function bug can create a bad one.
 - **CORS** only allows `SITE_URL`, localhost and `ALLOWED_ORIGINS`.
 - **Not built yet** (add before heavy traffic): per-user rate limits on the functions, and a support flow for refunds.

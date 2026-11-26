@@ -62,8 +62,16 @@ function Overview({ me }: { me: Me }) {
     let cancelled = false;
     void getDashboardSales(salesPeriod).then((result) => {
       if (cancelled) return;
-      if (result.ok) setSalesByPeriod((current) => ({ ...current, [salesPeriod]: result.data.sales }));
-      else setSalesError(result.message);
+      if (result.ok) {
+        const sales = result.data?.sales;
+        const salesKobo = sales?.sales_kobo == null ? Number.NaN : Number(sales.sales_kobo);
+        const totalOrders = sales?.total_orders == null ? Number.NaN : Number(sales.total_orders);
+        if (!sales || !Number.isFinite(salesKobo) || !Number.isFinite(totalOrders)) {
+          setSalesError("We couldn't load this sales range. Please try again.");
+        } else {
+          setSalesByPeriod((current) => ({ ...current, [salesPeriod]: { sales_kobo: salesKobo, total_orders: totalOrders } }));
+        }
+      } else setSalesError(result.message);
     }).catch(() => {
       if (!cancelled) setSalesError("We couldn't load this sales range. Please try again.");
     }).finally(() => {

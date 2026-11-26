@@ -9,9 +9,50 @@ const hexToBytes = (hex: string) => {
   return out;
 };
 
-/** Paystack signs the raw request body with HMAC-SHA512 using your secret key (header: x-paystack-signature). */
+/** Verify the current Paystack-Signature header using the webhook signing secret (whsec_...). */
+export async function verifyPaystackWebhookSignature(
+  rawBody: Uint8Array,
+  header: string | null,
+  secret: string,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): Promise<boolean> {
+  if (!header || !secret) return false;
+
+  let timestampText: string | null = null;
+  const signatures: string[] = [];
+  for (const part of header.split(",")) {
+    const separator = part.indexOf("=");
+    if (separator < 0) continue;
+    const name = part.slice(0, separator).trim();
+    const value = part.slice(separator + 1).trim();
+    if (name === "t") {
+      if (timestampText !== null || !/^\d+$/.test(value)) return false;
+      timestampText = value;
+    } else if (name === "v1") {
+      const colon = value.indexOf(":");
+      const signature = colon < 0 ? "" : value.slice(colon + 1);
+      if (/^[0-9a-f]{128}$/.test(signature)) signatures.push(signature);
+    }
+  }
+
+  if (timestampText === null || !Number.isSafeInteger(Number(timestampText)) || Math.abs(nowSeconds - Number(timestampText)) > 300 || signatures.length === 0) return false;
+
+  const enc = new TextEncoder();
+  const prefix = enc.encode(`${timestampText}.`);
+  const signedBody = new Uint8Array(prefix.length + rawBody.length);
+  signedBody.set(prefix);
+  signedBody.set(rawBody, prefix.length);
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-512" }, false, ["verify"]);
+  for (const signature of signatures) {
+    const sig = hexToBytes(signature);
+    if (sig && await crypto.subtle.verify("HMAC", key, sig, signedBody)) return true;
+  }
+  return false;
+}
+
+/** Legacy Paystack signature, retained while an integration transitions to Paystack-Signature. */
 export async function verifyPaystackSignature(
-  rawBody: string,
+  rawBody: string | Uint8Array,
   signature: string | null,
   secret: string,
 ): Promise<boolean> {
@@ -22,7 +63,7 @@ export async function verifyPaystackSignature(
   const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-512" }, false, [
     "verify",
   ]);
-  return crypto.subtle.verify("HMAC", key, sig, enc.encode(rawBody)); // constant-time comparison
+  return crypto.subtle.verify("HMAC", key, sig, typeof rawBody === "string" ? enc.encode(rawBody) : rawBody); // constant-time comparison
 }
 
 export interface PaystackVerifyData {
