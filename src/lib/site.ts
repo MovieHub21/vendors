@@ -11,10 +11,10 @@ export const SITE = {
   country: "NG",
   tagline: "Connecting Sellers. Powering Possibilities.",
   description:
-    "Sellsharp gives Nigerian WhatsApp vendors a shareable online store, order dashboard, receipts and debt tracker. Plans from ₦3,000 a month.",
+    "Sellsharp gives Nigerian WhatsApp vendors a shareable online store, order dashboard, receipts and debt tracker. Plans from ₦100 a month.",
   ogImage: "/logo-full.jpg",
   ogImageAlt: "Sellsharp — Connecting Sellers. Powering Possibilities.",
-  monthlyPriceKobo: 300_000,
+  monthlyPriceKobo: 10_000,
 } as const;
 
 export function absoluteUrl(path = "/"): string {

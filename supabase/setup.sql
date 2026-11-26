@@ -1592,58 +1592,7 @@ CREATE VIEW public.public_directory_locations AS
   GROUP BY city_slug;
 
 -- ============================================================
--- 20261113000200_storage_buckets.sql
--- ============================================================
--- =============================================================================
--- Migration: Create the product-images Supabase Storage bucket and its
--- Row-Level Security policies so vendors can upload product photos.
---
--- Safe to run more than once (policies are dropped and recreated).
--- =============================================================================
-
--- ── Bucket ────────────────────────────────────────────────────────────────────
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'product-images',
-  'product-images',
-  true,
-  5242880,   -- 5 MB per file
-  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
-)
-ON CONFLICT (id) DO NOTHING;
-
--- ── RLS policies ─────────────────────────────────────────────────────────────
-
--- 1. Anyone (including unauthenticated visitors) can VIEW product images
-DROP POLICY IF EXISTS "Anyone can view product images" ON storage.objects;
-CREATE POLICY "Anyone can view product images"
-  ON storage.objects FOR SELECT
-  TO public
-  USING (bucket_id = 'product-images');
-
--- 2. Authenticated vendors can UPLOAD product images
-DROP POLICY IF EXISTS "Authenticated users can upload product images" ON storage.objects;
-CREATE POLICY "Authenticated users can upload product images"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (bucket_id = 'product-images');
-
--- 3. Authenticated vendors can UPDATE (replace) their own images
-DROP POLICY IF EXISTS "Authenticated users can update product images" ON storage.objects;
-CREATE POLICY "Authenticated users can update product images"
-  ON storage.objects FOR UPDATE
-  TO authenticated
-  USING (bucket_id = 'product-images');
-
--- 4. Authenticated vendors can DELETE their own images
-DROP POLICY IF EXISTS "Authenticated users can delete product images" ON storage.objects;
-CREATE POLICY "Authenticated users can delete product images"
-  ON storage.objects FOR DELETE
-  TO authenticated
-  USING (bucket_id = 'product-images');
-
--- ============================================================
--- 20261113000200_storefront_design.sql
+-- 202611130002001_storefront_design.sql
 -- ============================================================
 -- Storefront settings, safe to apply when only the original store schema exists or
 -- when the later Showcase migration has already been applied. Keep public_stores'
@@ -1718,6 +1667,57 @@ create or replace view public.public_stores as
 
 revoke all on public.public_stores from anon, authenticated;
 grant select on public.public_stores to anon, authenticated;
+
+-- ============================================================
+-- 20261113000200_storage_buckets.sql
+-- ============================================================
+-- =============================================================================
+-- Migration: Create the product-images Supabase Storage bucket and its
+-- Row-Level Security policies so vendors can upload product photos.
+--
+-- Safe to run more than once (policies are dropped and recreated).
+-- =============================================================================
+
+-- ── Bucket ────────────────────────────────────────────────────────────────────
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'product-images',
+  'product-images',
+  true,
+  5242880,   -- 5 MB per file
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- ── RLS policies ─────────────────────────────────────────────────────────────
+
+-- 1. Anyone (including unauthenticated visitors) can VIEW product images
+DROP POLICY IF EXISTS "Anyone can view product images" ON storage.objects;
+CREATE POLICY "Anyone can view product images"
+  ON storage.objects FOR SELECT
+  TO public
+  USING (bucket_id = 'product-images');
+
+-- 2. Authenticated vendors can UPLOAD product images
+DROP POLICY IF EXISTS "Authenticated users can upload product images" ON storage.objects;
+CREATE POLICY "Authenticated users can upload product images"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'product-images');
+
+-- 3. Authenticated vendors can UPDATE (replace) their own images
+DROP POLICY IF EXISTS "Authenticated users can update product images" ON storage.objects;
+CREATE POLICY "Authenticated users can update product images"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (bucket_id = 'product-images');
+
+-- 4. Authenticated vendors can DELETE their own images
+DROP POLICY IF EXISTS "Authenticated users can delete product images" ON storage.objects;
+CREATE POLICY "Authenticated users can delete product images"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'product-images');
 
 -- ============================================================
 -- 20261113000300_showcase_storefront.sql
@@ -2788,7 +2788,7 @@ revoke all on function public.set_order_agreed_total(uuid, uuid, bigint) from pu
 grant execute on function public.set_order_agreed_total(uuid, uuid, bigint) to service_role;
 
 -- ============================================================
--- 20261116000000_dashboard_sales_ranges.sql
+-- 20261116000001_dashboard_sales_ranges.sql
 -- ============================================================
 -- Sales totals outside today are fetched only when the vendor selects that period.
 -- The (store_id, created_at) index on orders supports the bounded date range query.
@@ -3292,3 +3292,12 @@ end;
 $$;
 revoke all on function public.profit_loss_report(uuid, text) from public, anon, authenticated;
 grant execute on function public.profit_loss_report(uuid, text) to service_role;
+
+-- ============================================================
+-- 20261126000100_temporary_test_subscription_price.sql
+-- ============================================================
+-- Temporary live-payment test price: ₦100 (10,000 kobo).
+-- Restore to 300,000 kobo after the live payment check.
+update public.subscription_plans
+   set price_kobo = 10000
+ where code = 'monthly';

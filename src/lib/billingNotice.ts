@@ -32,7 +32,7 @@ export function billingNotice(me: Me, now = Date.now()): BillingNotice | null {
     return {
       kind: "trial_expired",
       title: "Your free trial has ended",
-      body: "Your store is offline and changes are locked. Subscribe for ₦3,000/month to continue. Your products and records are safe.",
+      body: "Your store is offline and changes are locked. Subscribe for ₦100/month during our live payment test to continue. Your products and records are safe.",
       action: "subscribe",
     };
   }

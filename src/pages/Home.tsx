@@ -249,7 +249,7 @@ export default function Home() {
           <div className="price-panel">
             <span className="price-label">SELLSHARP MONTHLY</span>
             <div className="price-amount">
-              ₦3,000 <small>/ month</small>
+              ₦100 <small>/ month</small>
             </div>
             <p>All the essentials for your growing business.</p>
             <Link to="/pricing" className="btn btn-white">
